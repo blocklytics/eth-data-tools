@@ -649,7 +649,7 @@ def clean_hex_data(val, val_type):
 def clean_transaction_receipts_df(df, contract):
     """Cleans transaction receipts dataframe and tries to add columns with formatted data."""
     # Make timestamp tz naive & re-order by timestamp
-    df['block_timestamp'] = df['block_timestamp'].astype("<M8")
+    df['block_timestamp'] = df['block_timestamp'].dt.tz_localize(None)
     df.sort_values(by=['block_timestamp'], ascending=True, inplace=True)
     df.reset_index(drop=True, inplace=True)
     
@@ -694,7 +694,7 @@ def clean_transaction_receipts_df(df, contract):
 def clean_event_logs_df(df, contract):
     """Cleans event logs dataframe and tries to add columns with formatted data."""
     # Make timestamp tz naive & re-order by timestamp
-    df['block_timestamp'] = df['block_timestamp'].astype("<M8")
+    df['block_timestamp'] = df['block_timestamp'].dt.tz_localize(None)
     df.sort_values(by=['block_timestamp'], ascending=True, inplace=True)
     df.reset_index(drop=True, inplace=True)
 
