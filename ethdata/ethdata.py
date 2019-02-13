@@ -664,7 +664,7 @@ def clean_transaction_receipts_df(df, contract):
         # Create new column for function_name
         df['function_name'] = None
         for row in df.itertuples():
-            if len(row.function_signature) == 10:
+            if row.function_signature is not None and len(row.function_signature) == 10:
                 df.at[row.Index, 'function_name'] = contract.functions[row.function_signature]['function_name']
         
         # Fill columns for function_data
@@ -673,7 +673,10 @@ def clean_transaction_receipts_df(df, contract):
                 df['param_' + data_name] = None
         
         for row in df.itertuples():
-            data = contract.functions[row.function_signature]['data']
+            try:
+                data = contract.functions[row.function_signature]['data']
+            except KeyError:
+                continue
             
             # iterate through data
             d = 0
