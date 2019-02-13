@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="eth-data-tools",
-    version="0.0.2",
+    version="0.0.3",
     author="Blocklytics",
     author_email="hello@blocklytics.org",
     description="A Python package to help analyse Ethereum data",
