@@ -629,6 +629,20 @@ def hex_to_address(val):
     
     return "0x{}".format(val[-40:])
 
+def hex_to_bool(val):
+    """Converts hex string or boolean integer to a clean boolean value.
+    
+    Returns a boolean data type True or False
+	"""
+	
+    if type(val) == str:
+        val = val.strip("0x").rstrip("0")
+		
+    if val:
+        return True
+    else:
+        return False
+	
 def make_tz_naive(val):
     """Converts datetime to timezone naive datetime (rounded down to nearest date)."""
     
