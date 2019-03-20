@@ -28,5 +28,8 @@ setuptools.setup(
     	'pycryptodome',
     	'google-cloud-bigquery[pyarrow]',
     	'pandas'
-    ]
+    ],
+	tests_require=[
+		'pytest'
+	]
 )
