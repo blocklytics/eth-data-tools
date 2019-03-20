@@ -31,12 +31,13 @@ class TestHelpers(object):
         assert ethdata.hex_to_float(10) != ethdata.hex_to_float("10")
         assert ethdata.hex_to_float("0x0000000000000000000000000000000000000000033b2e3c9fd0803ce8000000") == 1e+27
         
-    def clean_hex_data(self):
+    def test_clean_hex_data(self):
         assert ethdata.clean_hex_data("2e6236591bfa37c683ce60d6cfde40396a114ff1", "address") == "0x2e6236591bfa37c683ce60d6cfde40396a114ff1"
         assert ethdata.clean_hex_data("0xdeadbeef", "uint256") == 3_735_928_559
         assert ethdata.clean_hex_data("0xdeadbeef", "uint8") == 3_735_928_559
-        assert ethdata.clean_hex_data("5343484150000000000000000000000000000000000000000000000000000000", "string") == "SCHAP"
+        assert ethdata.clean_hex_data("5343484150000000000000000000000000000000000000000000000000000000", "string") == "5343484150000000000000000000000000000000000000000000000000000000"
         with pytest.warns(UserWarning):
              assert ethdata.clean_hex_data("0xdeadbeef", "unknown") == "0xdeadbeef"
+			 
 
 			 
