@@ -17,10 +17,11 @@ class TestHelpers(object):
         assert ethdata.hex_to_address("0x0000000000000000000000002e6236591bfa37c683ce60d6cfde40396a114ff1") == "0x2e6236591bfa37c683ce60d6cfde40396a114ff1"
 
     def test_hex_to_string_method(self):
-        assert ethdata.hex_to_string("516d554a445672414b313567626747545366367061336b51394757786f536e384e4a663579445832375962334741") == "QmUJDVrAK15gbgGTSf6pa3kQ9GWxoSn8NJf5yDX27Yb3GA"
-        assert ethdata.hex_to_string("464f414d00000000000000000000000000000000000000000000000000000000") == "FOAM"
-        assert ethdata.hex_to_string("0x464f414d00000000000000000000000000000000000000000000000000000000") == "FOAM"
-        assert ethdata.hex_to_string("5343484150000000000000000000000000000000000000000000000000000000") == "SCHAP"
+	    assert ethdata.hex_to_string("516d554a445672414b313567626747545366367061336b51394757786f536e384e4a663579445832375962334741") == "QmUJDVrAK15gbgGTSf6pa3kQ9GWxoSn8NJf5yDX27Yb3GA"
+	    assert ethdata.hex_to_string("464f414d00000000000000000000000000000000000000000000000000000000") == "FOAM"
+	    assert ethdata.hex_to_string("0x464f414d00000000000000000000000000000000000000000000000000000000") == "FOAM"
+	    assert ethdata.hex_to_string("5343484150000000000000000000000000000000000000000000000000000000") == "SCHAP"
+	    assert ethdata.hex_to_string(None) == ""
 
     def test_hex_to_float_method(self):
         assert ethdata.hex_to_float(1_000_000_000_000_000_000, decimals=18) == 1
@@ -37,3 +38,5 @@ class TestHelpers(object):
         assert ethdata.clean_hex_data("5343484150000000000000000000000000000000000000000000000000000000", "string") == "SCHAP"
         with pytest.warns(UserWarning):
              assert ethdata.clean_hex_data("0xdeadbeef", "unknown") == "0xdeadbeef"
+
+			 

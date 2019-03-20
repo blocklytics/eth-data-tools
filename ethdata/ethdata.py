@@ -599,7 +599,8 @@ def hex_to_string(val):
     
     Accepts padded or unpadded values.
     """
-    
+    if val is None:
+	    return ""
     s = val.strip('0x').rstrip('0')
     if len(s) % 2 == 1:
         s += "0"
