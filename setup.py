@@ -24,9 +24,12 @@ setuptools.setup(
         "Natural Language :: English"
     ],
     install_requires=[
-    	'requests',
-    	'pycryptodome',
-    	'google-cloud-bigquery[pyarrow]',
-    	'pandas'
+        'requests',
+        'pycryptodome',
+        'google-cloud-bigquery[pyarrow]',
+        'pandas'
+    ],
+    test_requirements=[
+        'pytest'
     ]
 )
