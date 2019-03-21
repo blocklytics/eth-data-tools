@@ -629,6 +629,20 @@ def hex_to_address(val):
     
     return "0x{}".format(val[-40:])
 
+def hex_to_bool(val):
+    """Converts hex string or boolean integer to a clean boolean value.
+    
+    Returns a boolean data type True or False
+	"""
+	
+    if type(val) == str:
+        val = val.strip("0x").rstrip("0")
+		
+    if val:
+        return True
+    else:
+        return False
+	
 def make_tz_naive(val):
     """Converts datetime to timezone naive datetime (rounded down to nearest date)."""
     
@@ -637,7 +651,7 @@ def make_tz_naive(val):
 def clean_hex_data(val, val_type):
     if val_type == "address":          # convert to address
         return hex_to_address(val)
-    elif val_type.startswith("uint"):  # convert to float
+    elif val_type.startswith("uint") or val_type.startswith("int"):  # convert to float
         return hex_to_float(val)
     elif val_type == "string":         # keep as hex
         return val
