@@ -33,7 +33,7 @@ class TestHelpers(object):
         
     def test_clean_hex_data(self):
         assert ethdata.clean_hex_data("2e6236591bfa37c683ce60d6cfde40396a114ff1", "address") == "0x2e6236591bfa37c683ce60d6cfde40396a114ff1"
-        assert ethdata.clean_hex_data("0xdeadbeef", "int256") == 3_735_928_559
+        assert ethdata.clean_hex_data("0xdeadbeef", "uint256") == 3_735_928_559
         assert ethdata.clean_hex_data("0xdeadbeef", "uint8") == 3_735_928_559
         assert ethdata.clean_hex_data("0xdeadbeef", "int256") == 3_735_928_559
         assert ethdata.clean_hex_data("0xdeadbeef", "int64") == 3_735_928_559
