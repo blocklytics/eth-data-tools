@@ -36,12 +36,15 @@ exception_list = {
         "symbol": "UNI-V1",
         "decimals": 0.0
     },
+	"0x09cabec1ead1c0ba254b09efb3ee13841712be14": {
+        "name": "Uniswap V1",
+        "symbol": "UNI-V1",
+        "decimals": 0.0
+	},
     "0xbb9bc244d798123fde783fcc1c72d3bb8c189413": {
         "name": "TheDAO",
         "symbol": "TheDAO"
-    },
-    "0x09cabec1ead1c0ba254b09efb3ee13841712be14": {
-        "symbol": "UNI-V1"
+        "decimals": 16
     }
 }
 
