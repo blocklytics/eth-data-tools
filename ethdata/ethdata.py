@@ -20,41 +20,33 @@ public_dataset = {
 }
 
 # Exception list
-file_name = "exceptions_list.json"
-
-if file_name not in os.listdir("."):
-    with open(file_name, "w") as w_file:
-        json.dump({
-                "0xeb9951021698b42e4399f9cbb6267aa35f82d59d": {
-                    "name": "Lif",
-                    "symbol": "LIF",
-                    "decimals": 18.0
-                },
-                "0xe0b7927c4af23765cb51314a0e0521a9645f0e2a": {
-                    "name": "DGD",
-                    "symbol": "DGD",
-                    "decimals": 9.0
-                },
-                "0x78bac62f2a4cd3a7cb7da2991affc7b11590f682": {
-                    "name": "Uniswap V1",
-                    "symbol": "UNI-V1",
-                    "decimals": 0.0
-                },
-                "0x09cabec1ead1c0ba254b09efb3ee13841712be14": {
-                    "name": "Uniswap V1",
-                    "symbol": "UNI-V1",
-                    "decimals": 0.0
-                },
-                "0xbb9bc244d798123fde783fcc1c72d3bb8c189413": {
-                    "name": "TheDAO",
-                    "symbol": "TheDAO",
-                    "decimals": 16.0
-                }
-                  }, w_file, indent=2)
-
-with open(file_name) as r_file:
-        exception_list = json.load(r_file)
-
+exception_list = {
+    "0xeb9951021698b42e4399f9cbb6267aa35f82d59d": {
+        "name": "Lif",
+        "symbol": "LIF",
+        "decimals": 18.0
+    },
+    "0xe0b7927c4af23765cb51314a0e0521a9645f0e2a": {
+        "name": "DGD",
+        "symbol": "DGD",
+        "decimals": 9.0
+    },
+    "0x78bac62f2a4cd3a7cb7da2991affc7b11590f682": {
+        "name": "Uniswap V1",
+        "symbol": "UNI-V1",
+        "decimals": 0.0
+    },
+	"0x09cabec1ead1c0ba254b09efb3ee13841712be14": {
+        "name": "Uniswap V1",
+        "symbol": "UNI-V1",
+        "decimals": 0.0
+	},
+    "0xbb9bc244d798123fde783fcc1c72d3bb8c189413": {
+        "name": "TheDAO",
+        "symbol": "TheDAO"
+        "decimals": 16
+    }
+}
 
 #################
 # ACCOUNT CLASS #
