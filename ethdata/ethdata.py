@@ -43,8 +43,8 @@ exception_list = {
 	},
     "0xbb9bc244d798123fde783fcc1c72d3bb8c189413": {
         "name": "TheDAO",
-        "symbol": "TheDAO"
-        "decimals": 16
+        "symbol": "TheDAO",
+        "decimals": 16.0
     }
 }
 
@@ -533,8 +533,9 @@ WHERE address = "{1}"
         """.format(public_dataset['logs'], contract.address, date_sql)
         
         result = self.run_query(sql)
-        clean_result = clean_event_logs_df(result, contract)
-        return clean_result
+        if result.shape[0] > 0:
+            result = clean_event_logs_df(result, contract)
+        return result
     
     def get_transaction_receipts(self, account):
         """Returns a Pandas dataframe of the account's succesful 
@@ -580,7 +581,8 @@ WHERE (to_address = "{1}"
         """.format(public_dataset['transactions'], account.address, date_sql)
         
         result = self.run_query(sql)
-        result = clean_transaction_receipts_df(result, account)
+        if result.shape[0] > 0:
+            result = clean_transaction_receipts_df(result, account)
         return result
         
 ### HELPERS ###
