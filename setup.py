@@ -30,6 +30,7 @@ setuptools.setup(
     	'pandas'
     ],
 	tests_require=[
-		'pytest'
+		'pytest',
+		'pytest-cov'
 	]
 )
