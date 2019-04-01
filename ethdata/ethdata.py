@@ -662,6 +662,8 @@ def clean_hex_data(val, val_type):
         return val
     elif val_type.startswith("bytes"): # keep as hex
         return val
+    elif val_type == "bool":
+        return hex_to_bool(val)
     else:                              # warn and keep as hex
         warnings.warn("Could not convert data type {0}".format(val_type))
         return val
@@ -691,26 +693,58 @@ def clean_transaction_receipts_df(df, contract):
         for function_signature in contract.functions:
             for data_name in contract.functions[function_signature]['data']:
                 df['param_' + data_name] = None
-        
+
         for row in df.itertuples():
             try:
                 data = contract.functions[row.function_signature]['data']
             except KeyError:
+                print("fail")
                 continue
             
             # iterate through data
             d = 0
+            skip_it = []    # in case of dynamic arrays and strings in arrays some rows may have to be skipped
+            # think about deleting this data instead of skipping it - data is not needed
             for data_name in data:
                 data_type = contract.functions[row.function_signature]['data'][data_name]
                 source = df.at[row.Index, "function_data"][d*64:64+d*64]
-                
-                df.at[row.Index, 'param_' + data_name] = clean_hex_data(source, data_type)
+                # last two lines are repeating withing this function - should we do a recursive function?
+
+                if "[" in data_type:
+                    array_size = data_type[data_type.index("[") + 1:-1]  # number between square brackets
+                    array = []  # array_values
+
+                    if array_size:  # True only when there array_size is not an empty string
+                        for i in range(int(array_size)):  # if it is not opening bracket it must specify how many times type repeats
+                            array.append(clean_hex_data(df.at[row.Index, "function_data"][(d + i)*64:64+(d + i)*64], data_type.rstrip(f"[{array_size}]")))
+                        df.at[row.Index, 'param_' + data_name] = array
+                        d += int(array_size) - 1
+
+                    else:
+                        array_position = int(hex_to_float(source)/32)  # offset of the first element in the array 
+                        length_array = int(clean_hex_data(df.at[row.Index, "function_data"][array_position*64:64+array_position*64], "int"))  # number of elements in and array
+                        # lenght could be cleaned just by passing it through int() function, but for larger rows it is better
+                        # to pass it through clean_hex_data()
+                        # source = [df.at[row.Index, "function_data"][(p + i)*64: 64 + (p+i)*64] for i in range(1, lenght + 1)]
+                        skip_it.append(array_position)
+                        for i in range(1, length_array + 1):  # array_position specifyes the length and the next lines are data
+                            array.append(clean_hex_data(df.at[row.Index, "function_data"][(array_position + i)*64: 64 + (array_position+i)*64], data_type.rstrip("[]")))
+                            skip_it.append(array_position + i)
+
+                        df.at[row.Index, 'param_' + data_name] = array
+                        # list of elements in array is created
+
+                else:
+                    df.at[row.Index, 'param_' + data_name] = clean_hex_data(source, data_type)
                 d += 1
-        
+                while d in skip_it and d < 20:
+                    d += 1
+                # print(df.at[row.Index, 'param_' + data_name], data_type)
+
         # drop raw data & empty columns
         df.drop(columns=["function_signature", "function_data"], inplace=True)
         df.dropna(axis='columns', how='all', inplace=True)
-    
+
     return df
 
 
