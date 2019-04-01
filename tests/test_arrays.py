@@ -4,22 +4,24 @@ import datetime as dt
 import json
 import pkgutil
 import pandas as pd
-from decimal import *
 
 
 class TestArrays:
+	"""Test cases:
+        1. Decoding an array from Bancor smart contract
+        2. Decoding a custom ABI and transactions for static arrays
+        3. Decoding a custom ABI and transactions for dynamic arrays
+    """
 
-	def test_real_array(self):
-		# tester can add any transaction he wants (but has to change the results)
+	def test_static_array_in_bancor(self):
 		my_contract = ethdata.Contract("0x6690819cb98c1211a8e38790d6cd48316ed518db")
 		my_contract.query_range = {"start": "2019-03-29", "end": "2019-03-29"}
 		df = my_contract.transaction_receipts
-		data = df.loc[df.transaction_hash == "0x6396ea4d7001cddde13597ea20e9a282f224a9c5db96bf7676bb08b09a3a09e5"].to_dict("r")[0]
-		for key in list(data.keys())[:6]:  # getting rid of the parameters that are not needed
-		# do all transactions include the same number of parameters?
-			data.pop(key)
+		returned_data = df.loc[df.transaction_hash == "0x6396ea4d7001cddde13597ea20e9a282f224a9c5db96bf7676bb08b09a3a09e5"].to_dict("r")[0]
+		for key in list(returned_data.keys())[:6]:  # remove unnecessary keys
+			returned_data.pop(key)
 
-		etherscan_data = {
+		expected_data = {
 						"param__path": ["0xc0829421c1d260bd3cb3e0f06cfe2d52db2ce315",
 						 "0x1f573d6fb3f13d689ff844b4ce37794d79a7ff1c",
 						 "0x1f573d6fb3f13d689ff844b4ce37794d79a7ff1c"],
@@ -32,14 +34,14 @@ class TestArrays:
 						"param__v": 28.0,
 						"param__r": "8d1c4d3f60fb71e291a1cfe72e433d2ffacb15dfa526ae55eca73389e22ef8e6",
 						"param__s": "772a420ca17e5c1a450c57e7d1e5aa57993f4f70bb89311e54e742a1c27bb83f"
-						 }
+						}
 
-		for key in data:
-			assert data[key] == etherscan_data[key]	
+		for key in returned_data:
+			assert returned_data[key] == expected_data[key]	
 
-	def test_custom_static_array(self):
+	def test_fake_static_array(self):
 		my_contract = ethdata.Contract("0x6690819cb98c1211a8e38790d6cd48316ed518db")
-		# creating fake abi
+		# overriding ABI with new values
 		my_contract.abi = [{
 							'constant': False, 
 							'inputs': [{'name': '_kelly', 'type': 'address[11]'}, {'name': '_greg', 'type': 'uint8[2]'},
@@ -51,8 +53,8 @@ class TestArrays:
 							'type': 'function'
 						  }]
 
-		# creating fake hex data
-		data = ["0000000000000000000000000000000000000000000000000000000000000000", # [0000000000000000000000000000000000000000,
+		# test data to inject into DataFrame for testing
+		test_data = ["0000000000000000000000000000000000000000000000000000000000000000", # [0000000000000000000000000000000000000000,
 			   "0000000000000000000000004e15361fd6b4bb609fa63c81a2be19d873717870",  # 4e15361fd6b4bb609fa63c81a2be19d873717870,
 			   "0000000000000000000000004E484D658700BA6642d075b1Ad1303A049fa23E8",  # 4E484D658700BA6642d075b1Ad1303A049fa23E8,
 			   "00000000000000000000000052bc44d5378309EE2abF1539BF71dE1b7d7bE3b5",  # 52bc44d5378309EE2abF1539BF71dE1b7d7bE3b5,
@@ -72,25 +74,24 @@ class TestArrays:
 			   "57dfd7bcba48c39f982a3a967da57ed42c1219c1d38169f035d84c1a5086a733",  # 57dfd7bcba48c39f982a3a967da57ed42c1219c1d38169f035d84c1a5086a733,
 			   "0a439bb94f79a4c46613b47cc75b3a1746e41d02b4304def3737a7b33d53b314"]   # 0a439bb94f79a4c46613b47cc75b3a1746e41d02b4304def3737a7b33d53b314]
 
-		# creating fake dataframe
+		# create DataFrame for testing
 		df = pd.DataFrame({
 			'transaction_hash': '0x498a18373623ca84e7caf058ab13fa288d34117dcd69cf20c7dd58d75e1d033f', 
 			'block_timestamp': pd.Timestamp('2019-02-20 12:00:00+0000', tz='UTC'), 
 			'from_address': '0x59550cdee3fe8685fdb76281f5bbd9a65dc50c51', 
 			'to_address': '0x6690819cb98c1211a8e38790d6cd48316ed518db', 
-			'value': Decimal('8000000000000000'), 
-			'function_signature': list(my_contract.functions.keys())[0],  # getting signature from contract
-			'function_data': "".join(data)
+			'value': 0, 
+			'function_signature': list(my_contract.functions.keys())[0],
+			'function_data': "".join(test_data)
 					  }, index=[0])
 
 		# cleaning data in appropriate format
 		clean_df = ethdata.clean_transaction_receipts_df(df, my_contract)
 		clean_df = clean_df.iloc[0].to_dict()
-		for key in list(clean_df.keys())[:6]:	# getting rid of the parameters that are not needed
+		for key in list(clean_df.keys())[:6]:  # remove unnecessary keys
 			clean_df.pop(key)
 
-		# expected result
-		result = {
+		expected_result = {
 		'param__kelly': 
 		["0x0000000000000000000000000000000000000000",
 		"0x4e15361fd6b4bb609fa63c81a2be19d873717870",
@@ -112,11 +113,11 @@ class TestArrays:
 		}
 
 		for key in clean_df:
-			assert clean_df[key] == result[key]
+			assert clean_df[key] == expected_result[key]
 
-	def test_custom_dynamic_array(self):
+	def test_fake_dynamic_array(self):
 			my_contract = ethdata.Contract("0x6690819cb98c1211a8e38790d6cd48316ed518db")
-			# creating fake abi
+			# overriding ABI with new values
 			my_contract.abi = [{
 								'constant': False, 
 								'inputs': [{'name': '_jack', 'type': 'address[]'}, {'name': '_price', 'type': 'int8[]'},
@@ -128,8 +129,8 @@ class TestArrays:
 								'type': 'function'
 							  }]
 
-			# creating fake hex data
-			data = ["0000000000000000000000000000000000000000000000000000000000000040",  # address
+			# test data to inject into DataFrame for testing
+			test_data = ["0000000000000000000000000000000000000000000000000000000000000040",  # address
 				   "00000000000000000000000000000000000000000000000000000000000000A0",  # int
 				   "0000000000000000000000000000000000000000000000000000000000000002",
 				   "0000000000000000000000000000000000000000000000000000000000000000",  # [0000000000000000000000000000000000000000,
@@ -146,25 +147,24 @@ class TestArrays:
 				   "0000000000000000000000000000000000000000000000000000000000000000",  # [False,
 				   "0000000000000000000000000000000000000000000000000000000000000001"]  # True]
 
-			# creating fake dataframe
+			# create DataFrame for testing
 			df = pd.DataFrame({
 				'transaction_hash': '0x498a18373623ca84e7caf058ab13fa288d34117dcd69cf20c7dd58d75e1d033f', 
 				'block_timestamp': pd.Timestamp('2019-02-20 12:00:00+0000', tz='UTC'), 
 				'from_address': '0x59550cdee3fe8685fdb76281f5bbd9a65dc50c51', 
 				'to_address': '0x6690819cb98c1211a8e38790d6cd48316ed518db', 
 				'value': Decimal('8000000000000000'), 
-				'function_signature': list(my_contract.functions.keys())[0],  # getting signature from contract
-				'function_data': "".join(data)
+				'function_signature': list(my_contract.functions.keys())[0],
+				'function_data': "".join(test_data)
 						  }, index=[0])
 
 			# cleaning data in appropriate format
 			clean_df = ethdata.clean_transaction_receipts_df(df, my_contract)
 			clean_df = clean_df.iloc[0].to_dict()
-			for key in list(clean_df.keys())[:6]:	# getting rid of the parameters that are not needed
+			for key in list(clean_df.keys())[:6]:  # remove unnecessary keys
 				clean_df.pop(key)
 
-			# expected result
-			result = {
+			expected_result = {
 			'param__jack': ['0x0000000000000000000000000000000000000000', '0x4e15361fd6b4bb609fa63c81a2be19d873717870'], 
 			'param__price': [28.0, 28.0], 
 			'param__yuri': ['58195c401a8d174bd01f666948a1a2400c2bc01f5a8a80aa5d1559a192d89a30', 
@@ -173,4 +173,4 @@ class TestArrays:
 			 }
 
 			for key in clean_df:
-				assert clean_df[key] == result[key]
+				assert clean_df[key] == expected_result[key]
