@@ -662,6 +662,8 @@ def clean_hex_data(val, val_type):
         return val
     elif val_type.startswith("bytes"): # keep as hex
         return val
+    elif val_type == "bool":
+        return hex_to_bool(val)
     else:                              # warn and keep as hex
         warnings.warn("Could not convert data type {0}".format(val_type))
         return val
