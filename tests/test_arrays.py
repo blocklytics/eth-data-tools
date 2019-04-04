@@ -153,7 +153,7 @@ class TestArrays:
 				'block_timestamp': pd.Timestamp('2019-02-20 12:00:00+0000', tz='UTC'), 
 				'from_address': '0x59550cdee3fe8685fdb76281f5bbd9a65dc50c51', 
 				'to_address': '0x6690819cb98c1211a8e38790d6cd48316ed518db', 
-				'value': Decimal('8000000000000000'), 
+				'value': 0, 
 				'function_signature': list(my_contract.functions.keys())[0],
 				'function_data': "".join(test_data)
 						  }, index=[0])
