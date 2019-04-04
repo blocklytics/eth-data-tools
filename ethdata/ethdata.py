@@ -709,6 +709,16 @@ def clean_transaction_receipts_df(df, contract):
                 data_type = contract.functions[row.function_signature]['data'][data_name]
                 raw_row = raw_rows[d]
 
+                # checking for unsupported type
+                stat1 = data_type.count("[") == 2
+                stat2 = data_type == "bytes"
+                stat3 = "string" in data_type
+                if stat1 or stat2 or stat3:
+                	warnings.warn(f"{data_type} is not yet supported")
+                	df.at[row.Index, 'param_' + data_name] = raw_row
+                	d += 1
+                	continue
+
                 # checking if row is empty
                 if raw_row is None:
                     d += 1
@@ -736,6 +746,7 @@ def clean_transaction_receipts_df(df, contract):
                 else:
                     df.at[row.Index, 'param_' + data_name] = clean_hex_data(raw_row, data_type)
                 d += 1
+                print(data_type)
 
         # drop raw data & empty columns
         df.drop(columns=["function_signature", "function_data"], inplace=True)
