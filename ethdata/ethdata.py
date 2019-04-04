@@ -702,17 +702,45 @@ def clean_transaction_receipts_df(df, contract):
             
             # iterate through data
             d = 0
+            raw_rows_string = df.at[row.Index, "function_data"]
+            raw_rows = [raw_rows_string[i: i + 64] for i in range(0, len(raw_rows_string), 64)]
+
             for data_name in data:
                 data_type = contract.functions[row.function_signature]['data'][data_name]
-                source = df.at[row.Index, "function_data"][d*64:64+d*64]
-                
-                df.at[row.Index, 'param_' + data_name] = clean_hex_data(source, data_type)
+                raw_row = raw_rows[d]
+
+                # checking if row is empty
+                if raw_row is None:
+                    d += 1
+                    continue
+
+                if "[" in data_type:
+                    array_size = data_type[data_type.index("[") + 1:-1]
+
+                    # static array
+                    if array_size:
+                        # iterating through rows of elements and creating a list with them
+                        df.at[row.Index, 'param_' + data_name] = [clean_hex_data(raw_rows[d + i], data_type.rstrip(
+                                                                  f"[{array_size}]")) for i in range(int(array_size))]
+                        d += int(array_size) - 1  # moving iteration to a row following the array's last element
+                    # dynamic array
+                    else:
+                        array_offset = int(hex_to_float(raw_row)/32)  # offset of the first element in the array 
+                        array_length = int(clean_hex_data(raw_rows[array_offset], "int"))
+                        # iterating through rows of elements and creating a list with them
+                        df.at[row.Index, 'param_' + data_name] = [clean_hex_data(raw_rows[i + array_offset + 1],
+                                                                  data_type.rstrip("[]")) for i in range(array_length)]
+                        # making used rows empty
+                        for row_index in range(array_offset, array_offset + array_length + 1):
+                            raw_rows[row_index] = None
+                else:
+                    df.at[row.Index, 'param_' + data_name] = clean_hex_data(raw_row, data_type)
                 d += 1
-        
+
         # drop raw data & empty columns
         df.drop(columns=["function_signature", "function_data"], inplace=True)
         df.dropna(axis='columns', how='all', inplace=True)
-    
+
     return df
 
 
