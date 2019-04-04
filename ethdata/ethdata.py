@@ -656,7 +656,7 @@ def make_tz_naive(val):
 def clean_hex_data(val, val_type):
     if val_type == "address":          # convert to address
         return hex_to_address(val)
-    elif val_type.startswith("uint") or val_type.startswith("int"):  # convert to float
+    elif "int" in val_type:  # convert to float
         return hex_to_float(val)
     elif val_type == "string":         # keep as hex
         return val
