@@ -753,7 +753,6 @@ def clean_transaction_receipts_df(df, contract):
 
     return df
 
-
 def clean_event_logs_df(df, contract):
     """Cleans event logs dataframe and tries to add columns with formatted data."""
     # Make timestamp tz naive & re-order by timestamp
