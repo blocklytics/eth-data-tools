@@ -1,5 +1,4 @@
 import pytest
-import warnings
 from ethdata import ethdata
 import datetime as dt
 import json
