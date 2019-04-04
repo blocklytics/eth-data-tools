@@ -1,4 +1,5 @@
 import pytest
+import warnings
 from ethdata import ethdata
 import datetime as dt
 import json
@@ -11,6 +12,7 @@ class TestArrays:
         1. Decoding an array from Bancor smart contract
         2. Decoding a custom ABI and transactions for static arrays
         3. Decoding a custom ABI and transactions for dynamic arrays
+        4. Decoding a custom ABI and transactions for 2D arrays and types bytes and string[]
     """
 
 	def test_static_array_in_bancor(self):
@@ -54,7 +56,8 @@ class TestArrays:
 						  }]
 
 		# test data to inject into DataFrame for testing
-		test_data = ["0000000000000000000000000000000000000000000000000000000000000000", # [0000000000000000000000000000000000000000,
+		test_data = [
+			   "0000000000000000000000000000000000000000000000000000000000000000", # [0000000000000000000000000000000000000000,
 			   "0000000000000000000000004e15361fd6b4bb609fa63c81a2be19d873717870",  # 4e15361fd6b4bb609fa63c81a2be19d873717870,
 			   "0000000000000000000000004E484D658700BA6642d075b1Ad1303A049fa23E8",  # 4E484D658700BA6642d075b1Ad1303A049fa23E8,
 			   "00000000000000000000000052bc44d5378309EE2abF1539BF71dE1b7d7bE3b5",  # 52bc44d5378309EE2abF1539BF71dE1b7d7bE3b5,
@@ -116,61 +119,107 @@ class TestArrays:
 			assert clean_df[key] == expected_result[key]
 
 	def test_fake_dynamic_array(self):
-			my_contract = ethdata.Contract("0x6690819cb98c1211a8e38790d6cd48316ed518db")
-			# overriding ABI with new values
-			my_contract.abi = [{
-								'constant': False, 
-								'inputs': [{'name': '_jack', 'type': 'address[]'}, {'name': '_price', 'type': 'int8[]'},
-										   {'name': '_yuri', 'type': 'bytes32[]'}, {'name': '_soap', 'type': 'bool[]'}], 
-								'name': 'registerEtherToken', 
-								'outputs': [], 
-								'payable': False, 
-								'stateMutability': 'nonpayable', 
-								'type': 'function'
-							  }]
+		my_contract = ethdata.Contract("0x6690819cb98c1211a8e38790d6cd48316ed518db")
+		# overriding ABI with new values
+		my_contract.abi = [{
+							'constant': False, 
+							'inputs': [{'name': '_jack', 'type': 'address[]'}, {'name': '_price', 'type': 'int8[]'},
+									   {'name': '_yuri', 'type': 'bytes32[]'}, {'name': '_soap', 'type': 'bool[]'}], 
+							'name': 'registerEtherToken', 
+							'outputs': [], 
+							'payable': False, 
+							'stateMutability': 'nonpayable', 
+							'type': 'function'
+						  }]
 
-			# test data to inject into DataFrame for testing
-			test_data = ["0000000000000000000000000000000000000000000000000000000000000040",  # address
-				   "00000000000000000000000000000000000000000000000000000000000000A0",  # int
-				   "0000000000000000000000000000000000000000000000000000000000000002",
-				   "0000000000000000000000000000000000000000000000000000000000000000",  # [0000000000000000000000000000000000000000,
-				   "0000000000000000000000004e15361fd6b4bb609fa63c81a2be19d873717870",  # 4e15361fd6b4bb609fa63c81a2be19d873717870]
-				   "0000000000000000000000000000000000000000000000000000000000000002",
-				   "000000000000000000000000000000000000000000000000000000000000001c",  # [28,
-				   "000000000000000000000000000000000000000000000000000000000000001c",  # 28]
-				   "0000000000000000000000000000000000000000000000000000000000000140",  # bytes32
-				   "00000000000000000000000000000000000000000000000000000000000001A0",  # bool
-				   "0000000000000000000000000000000000000000000000000000000000000002",
-				   "58195c401a8d174bd01f666948a1a2400c2bc01f5a8a80aa5d1559a192d89a30",  # [58195c401a8d174bd01f666948a1a2400c2bc01f5a8a80aa5d1559a192d89a30
-				   "0206a07fec44b8720a37debd0c251824daf65a3725de7aa58fd0d6222f7acf80",  # 0206a07fec44b8720a37debd0c251824daf65a3725de7aa58fd0d6222f7acf80]
-				   "0000000000000000000000000000000000000000000000000000000000000002", 
-				   "0000000000000000000000000000000000000000000000000000000000000000",  # [False,
-				   "0000000000000000000000000000000000000000000000000000000000000001"]  # True]
+		# test data to inject into DataFrame for testing
+		test_data = [
+			   "0000000000000000000000000000000000000000000000000000000000000040",  # address
+			   "00000000000000000000000000000000000000000000000000000000000000A0",  # int
+			   "0000000000000000000000000000000000000000000000000000000000000002",
+			   "0000000000000000000000000000000000000000000000000000000000000000",  # [0000000000000000000000000000000000000000,
+			   "0000000000000000000000004e15361fd6b4bb609fa63c81a2be19d873717870",  # 4e15361fd6b4bb609fa63c81a2be19d873717870]
+			   "0000000000000000000000000000000000000000000000000000000000000002",
+			   "000000000000000000000000000000000000000000000000000000000000001c",  # [28,
+			   "000000000000000000000000000000000000000000000000000000000000001c",  # 28]
+			   "0000000000000000000000000000000000000000000000000000000000000140",  # bytes32
+			   "00000000000000000000000000000000000000000000000000000000000001A0",  # bool
+			   "0000000000000000000000000000000000000000000000000000000000000002",
+			   "58195c401a8d174bd01f666948a1a2400c2bc01f5a8a80aa5d1559a192d89a30",  # [58195c401a8d174bd01f666948a1a2400c2bc01f5a8a80aa5d1559a192d89a30
+			   "0206a07fec44b8720a37debd0c251824daf65a3725de7aa58fd0d6222f7acf80",  # 0206a07fec44b8720a37debd0c251824daf65a3725de7aa58fd0d6222f7acf80]
+			   "0000000000000000000000000000000000000000000000000000000000000002", 
+			   "0000000000000000000000000000000000000000000000000000000000000000",  # [False,
+			   "0000000000000000000000000000000000000000000000000000000000000001"]  # True]
 
-			# create DataFrame for testing
-			df = pd.DataFrame({
-				'transaction_hash': '0x498a18373623ca84e7caf058ab13fa288d34117dcd69cf20c7dd58d75e1d033f', 
-				'block_timestamp': pd.Timestamp('2019-02-20 12:00:00+0000', tz='UTC'), 
-				'from_address': '0x59550cdee3fe8685fdb76281f5bbd9a65dc50c51', 
-				'to_address': '0x6690819cb98c1211a8e38790d6cd48316ed518db', 
-				'value': 0, 
-				'function_signature': list(my_contract.functions.keys())[0],
-				'function_data': "".join(test_data)
-						  }, index=[0])
+		# create DataFrame for testing
+		df = pd.DataFrame({
+			'transaction_hash': '0x498a18373623ca84e7caf058ab13fa288d34117dcd69cf20c7dd58d75e1d033f', 
+			'block_timestamp': pd.Timestamp('2019-02-20 12:00:00+0000', tz='UTC'), 
+			'from_address': '0x59550cdee3fe8685fdb76281f5bbd9a65dc50c51', 
+			'to_address': '0x6690819cb98c1211a8e38790d6cd48316ed518db', 
+			'value': 0, 
+			'function_signature': list(my_contract.functions.keys())[0],
+			'function_data': "".join(test_data)
+					  }, index=[0])
 
-			# cleaning data in appropriate format
-			clean_df = ethdata.clean_transaction_receipts_df(df, my_contract)
-			clean_df = clean_df.iloc[0].to_dict()
-			for key in list(clean_df.keys())[:6]:  # remove unnecessary keys
-				clean_df.pop(key)
+		# cleaning data in appropriate format
+		clean_df = ethdata.clean_transaction_receipts_df(df, my_contract)
+		clean_df = clean_df.iloc[0].to_dict()
+		for key in list(clean_df.keys())[:6]:  # remove unnecessary keys
+			clean_df.pop(key)
 
-			expected_result = {
-			'param__jack': ['0x0000000000000000000000000000000000000000', '0x4e15361fd6b4bb609fa63c81a2be19d873717870'], 
-			'param__price': [28.0, 28.0], 
-			'param__yuri': ['58195c401a8d174bd01f666948a1a2400c2bc01f5a8a80aa5d1559a192d89a30', 
-			'0206a07fec44b8720a37debd0c251824daf65a3725de7aa58fd0d6222f7acf80'], 
-			'param__soap': [False, True]
-			 }
+		expected_result = {
+		'param__jack': ['0x0000000000000000000000000000000000000000', '0x4e15361fd6b4bb609fa63c81a2be19d873717870'], 
+		'param__price': [28.0, 28.0], 
+		'param__yuri': ['58195c401a8d174bd01f666948a1a2400c2bc01f5a8a80aa5d1559a192d89a30', 
+		'0206a07fec44b8720a37debd0c251824daf65a3725de7aa58fd0d6222f7acf80'], 
+		'param__soap': [False, True]
+		 }
 
-			for key in clean_df:
-				assert clean_df[key] == expected_result[key]
+		for key in clean_df:
+			assert clean_df[key] == expected_result[key]
+
+	def test_unsupported_array_types(self):
+		eg_unsupported_types = ['address[][]', 'int8[2][]', 'bytes32[][3]', 'bool[2][3]', 'bytes', 'string[2]', 'string[]']
+		my_contract = ethdata.Contract("0x6690819cb98c1211a8e38790d6cd48316ed518db")
+
+		# overriding ABI with new values
+		my_contract.abi = [{
+							'constant': False, 
+							'inputs': [{'name': '_jack', 'type': 'address[][]'}, {'name': '_price', 'type': 'int8[2][]'},
+									   {'name': '_yuri', 'type': 'bytes32[][3]'}, {'name': '_soap', 'type': 'bool[2][3]'},
+									   {'name': '_kelly', 'type': 'bytes'}, {'name': '_greg', 'type': 'string[2]'},
+									   {'name': '_thomas', 'type': 'string[]'}], 
+							'name': 'registerEtherToken', 
+							'outputs': [], 
+							'payable': False, 
+							'stateMutability': 'nonpayable', 
+							'type': 'function'
+						  }]
+
+		# test data to inject into DataFrame for testing (this data does not represent ABI's types)
+		test_data = [
+			   "0000000000000000000000000000000000000000000000000000000000000040",
+			   "00000000000000000000000000000000000000000000000000000000000000A0",
+			   "0000000000000000000000000000000000000000000000000000000000000002",
+			   "0000000000000000000000000000000000000000000000000000000000000000",
+			   "0000000000000000000000004e15361fd6b4bb609fa63c81a2be19d873717870",
+			   "0000000000000000000000000000000000000000000000000000000000000002",
+			   "000000000000000000000000000000000000000000000000000000000000001c"]
+
+		# create DataFrame for testing
+		df = pd.DataFrame({
+			'transaction_hash': '0x498a18373623ca84e7caf058ab13fa288d34117dcd69cf20c7dd58d75e1d033f', 
+			'block_timestamp': pd.Timestamp('2019-02-20 12:00:00+0000', tz='UTC'), 
+			'from_address': '0x59550cdee3fe8685fdb76281f5bbd9a65dc50c51', 
+			'to_address': '0x6690819cb98c1211a8e38790d6cd48316ed518db', 
+			'value': 0, 
+			'function_signature': list(my_contract.functions.keys())[0],
+			'function_data': "".join(test_data)
+					  }, index=[0])
+
+		with pytest.warns(UserWarning) as record:
+			ethdata.clean_transaction_receipts_df(df, my_contract)
+		assert len(record) == len(eg_unsupported_types)
+		for n, warning in enumerate(record):
+			assert str(warning.message) == f"{eg_unsupported_types[n]} is not yet supported"
