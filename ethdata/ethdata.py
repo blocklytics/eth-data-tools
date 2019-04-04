@@ -746,7 +746,6 @@ def clean_transaction_receipts_df(df, contract):
                 else:
                     df.at[row.Index, 'param_' + data_name] = clean_hex_data(raw_row, data_type)
                 d += 1
-                print(data_type)
 
         # drop raw data & empty columns
         df.drop(columns=["function_signature", "function_data"], inplace=True)
