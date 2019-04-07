@@ -1,4 +1,5 @@
 import pytest
+import warnings
 from ethdata import ethdata
 import datetime as dt
 import json
@@ -6,12 +7,12 @@ import pkgutil
 import pandas as pd
 
 
-class TestArrays:
+class TestArraysTransactionReceipts:
 	"""Test cases:
         1. Decoding an array from Bancor smart contract
-        2. Decoding a custom ABI and transactions for static arrays
-        3. Decoding a custom ABI and transactions for dynamic arrays
-        4. Decoding a custom ABI and transactions for 2D arrays and types bytes and string[]
+        2. Decoding a custom ABI and transaction for static arrays
+        3. Decoding a custom ABI and transaction for dynamic arrays
+        4. Decoding a custom ABI and transaction for 2D arrays and types bytes and string[]
     """
 
 	def test_static_array_in_bancor(self):
@@ -88,10 +89,9 @@ class TestArrays:
 					  }, index=[0])
 
 		# cleaning data in appropriate format
-		clean_df = ethdata.clean_transaction_receipts_df(df, my_contract)
-		clean_df = clean_df.iloc[0].to_dict()
-		for key in list(clean_df.keys())[:6]:  # remove unnecessary keys
-			clean_df.pop(key)
+		returned_data = ethdata.clean_transaction_receipts_df(df, my_contract).iloc[0].to_dict()
+		for key in list(returned_data.keys())[:6]:  # remove unnecessary keys
+			returned_data.pop(key)
 
 		expected_result = {
 		'param__kelly': 
@@ -114,8 +114,8 @@ class TestArrays:
 		'0a439bb94f79a4c46613b47cc75b3a1746e41d02b4304def3737a7b33d53b314']
 		}
 
-		for key in clean_df:
-			assert clean_df[key] == expected_result[key]
+		for key in returned_data:
+			assert returned_data[key] == expected_result[key]
 
 	def test_fake_dynamic_array(self):
 		my_contract = ethdata.Contract("0x6690819cb98c1211a8e38790d6cd48316ed518db")
@@ -162,10 +162,9 @@ class TestArrays:
 					  }, index=[0])
 
 		# cleaning data in appropriate format
-		clean_df = ethdata.clean_transaction_receipts_df(df, my_contract)
-		clean_df = clean_df.iloc[0].to_dict()
-		for key in list(clean_df.keys())[:6]:  # remove unnecessary keys
-			clean_df.pop(key)
+		returned_data = ethdata.clean_transaction_receipts_df(df, my_contract).iloc[0].to_dict()
+		for key in list(returned_data.keys())[:6]:  # remove unnecessary keys
+			returned_data.pop(key)
 
 		expected_result = {
 		'param__jack': ['0x0000000000000000000000000000000000000000', '0x4e15361fd6b4bb609fa63c81a2be19d873717870'], 
@@ -175,8 +174,8 @@ class TestArrays:
 		'param__soap': [False, True]
 		 }
 
-		for key in clean_df:
-			assert clean_df[key] == expected_result[key]
+		for key in returned_data:
+			assert returned_data[key] == expected_result[key]
 
 	def test_unsupported_array_types(self):
 		eg_unsupported_types = ['address[][]', 'int8[2][]', 'bytes32[][3]', 'bool[2][3]', 'bytes', 'string[2]', 'string[]', 'string']
@@ -221,4 +220,298 @@ class TestArrays:
 		with pytest.warns(UserWarning) as record:
 			ethdata.clean_transaction_receipts_df(df, my_contract)
 		for n, warning in enumerate(record):
+			if warning.category == UserWarning:
+				assert str(warning.message) == f"{eg_unsupported_types[n]} is not yet supported"
+
+
+class TestArraysEventLogs:
+	"""Test cases:
+        1. Decoding a custom ABI and an event log for static arrays - data passed in event data
+        2. Decoding a custom ABI and an event log for static arrays - data passed in event topics
+        3. Decoding a custom ABI and an event log for dynamic arrays - data passed in event data
+        4. Decoding a custom ABI and an event log for dynamic arrays - data passed in event topics
+        5. Decoding a custom ABI and an event log to test for warning with unsupported types - data passed in event data
+        6. Decoding a custom ABI and an event log to test for warning with unsupported types - data passed in event topics
+    """
+	def test_static_array_handling_with_data(self):
+		my_contract = ethdata.Contract("0x2a0c0dbecc7e4d658f48e01e3fa353f44050c208")
+		my_contract.query_range = {"start": "2018-11-15", "end": "2018-11-15"}
+
+		# overriding ABI with new values
+		my_contract.abi = [{
+							'anonymous': False, 
+							'inputs': [
+										{'indexed': False, 'name': 'token', 'type': 'address[5]'}, 
+										{'indexed': False, 'name': 'user', 'type': 'int8[2]'}, 
+										{'indexed': False, 'name': 'amount', 'type': 'bool[2]'}, 
+										{'indexed': False, 'name': 'balance', 'type': 'bytes32[3]'}
+									  ], 
+							'name': 'Withdraw', 'type': 'event'}]
+
+		# test data to inject into DataFrame for testing (this data does not represent ABI's types)
+		test_data = "".join(["0x",
+						   "0000000000000000000000000000000000000000000000000000000000000000", # [0000000000000000000000000000000000000000,
+						   "0000000000000000000000004e15361fd6b4bb609fa63c81a2be19d873717870",  # 4e15361fd6b4bb609fa63c81a2be19d873717870,
+						   "0000000000000000000000004E484D658700BA6642d075b1Ad1303A049fa23E8",  # 4E484D658700BA6642d075b1Ad1303A049fa23E8,
+						   "00000000000000000000000052bc44d5378309EE2abF1539BF71dE1b7d7bE3b5",  # 52bc44d5378309EE2abF1539BF71dE1b7d7bE3b5,
+						   "0000000000000000000000001042320137d4e923711e33d8f758e512a235ef8e",  # 1042320137d4e923711e33d8f758e512a235ef8e]
+						   "000000000000000000000000000000000000000000000000000000000000001c",  # [28,
+						   "000000000000000000000000000000000000000000000000000000000000001c",  # 28]
+						   "0000000000000000000000000000000000000000000000000000000000000000",  # [False,
+						   "0000000000000000000000000000000000000000000000000000000000000001",  # True]
+						   "58195c401a8d174bd01f666948a1a2400c2bc01f5a8a80aa5d1559a192d89a30",  # [58195c401a8d174bd01f666948a1a2400c2bc01f5a8a80aa5d1559a192d89a30
+						   "0206a07fec44b8720a37debd0c251824daf65a3725de7aa58fd0d6222f7acf80",  # 0206a07fec44b8720a37debd0c251824daf65a3725de7aa58fd0d6222f7acf80,
+						   "57dfd7bcba48c39f982a3a967da57ed42c1219c1d38169f035d84c1a5086a733"])  # 57dfd7bcba48c39f982a3a967da57ed42c1219c1d38169f035d84c1a5086a733])
+
+		# create DataFrame for testing
+		df = pd.DataFrame({
+			'transaction_hash': '0x762a85b8f67862f3a9558c586f12bc668774cc0789bf66920a1b399684ed4ae9', 
+			'block_timestamp': pd.Timestamp('2018-11-15 00:01:59'), 
+			'address': '0x2a0c0dbecc7e4d658f48e01e3fa353f44050c208', 
+			'topics_0': list(my_contract.events.keys())[0], 
+			'topics_1': None, 
+			'topics_2': None, 
+			'topics_3': None, 
+			'transaction_data': test_data
+			}, index=[0])
+
+		returned_data = ethdata.clean_event_logs_df(df, my_contract).to_dict("r")[0]
+		for key in ("transaction_hash", "block_timestamp", "event_name", "address"):
+			returned_data.pop(key)
+
+		expected_data = {'data_token': [
+										"0x0000000000000000000000000000000000000000",
+										"0x4e15361fd6b4bb609fa63c81a2be19d873717870",
+										"0x4E484D658700BA6642d075b1Ad1303A049fa23E8",
+										"0x52bc44d5378309EE2abF1539BF71dE1b7d7bE3b5",
+										"0x1042320137d4e923711e33d8f758e512a235ef8e"], 
+						'data_user': [28.0, 28.0], 
+						'data_amount': [False, True], 
+						'data_balance': [
+										'58195c401a8d174bd01f666948a1a2400c2bc01f5a8a80aa5d1559a192d89a30', 
+										'0206a07fec44b8720a37debd0c251824daf65a3725de7aa58fd0d6222f7acf80', 
+										'57dfd7bcba48c39f982a3a967da57ed42c1219c1d38169f035d84c1a5086a733']
+						}
+						
+
+		for key in returned_data:
+			assert returned_data[key] == expected_data[key]
+
+	def test_static_array_handling_with_topics(self):
+		eg_array_types = ["address[2]", "int8[3]", "bytes32[4]", "bool[2]"]
+		my_contract = ethdata.Contract("0x6690819cb98c1211a8e38790d6cd48316ed518db")
+
+		# overriding ABI with new values
+		my_contract.abi = [{
+							'anonymous': False, 
+							'inputs': [	
+										{'indexed': True, 'name': 'token', 'type': 'address[2]'}, 
+										{'indexed': True, 'name': 'user', 'type': 'int8[3]'},
+										{'indexed': True, 'name': 'amount', 'type': 'bytes32[4]'}, 
+										{'indexed': True, 'name': 'mount', 'type': 'bool[2]'} 
+									  ], 
+							'name': 'Withdraw', 'type': 'event'}]
+
+		# create DataFrame for testing
+		df = pd.DataFrame({
+			'transaction_hash': '0x762a85b8f67862f3a9558c586f12bc668774cc0789bf66920a1b399684ed4ae9', 
+			'block_timestamp': pd.Timestamp('2018-11-15 00:01:59'), 
+			'address': '0x2a0c0dbecc7e4d658f48e01e3fa353f44050c208', 
+			'topics_0': list(my_contract.events.keys())[0], 
+			'topics_1': "0000000000000000000000000000000000000000000000000000000000000040", 
+			'topics_2': "00000000000000000000000000000000000000000000000000000000000000A0", 
+			'topics_3': "0000000000000000000000000000000000000000000000000000000000000002",
+			'topics_4': "0000000000000000000000000000000000000000000000000000000000000040", 
+			'transaction_data': None
+			}, index=[0])
+
+		with pytest.warns(UserWarning) as record:
+			ethdata.clean_event_logs_df(df, my_contract)
+		for n, warning in enumerate(record):
+			if warning.category == UserWarning:
+				assert str(warning.message) == f"{eg_array_types[n]} is not yet supported passed as topic"
+
+	def test_dynamic_array_handling_with_data(self):
+		my_contract = ethdata.Contract("0x2a0c0dbecc7e4d658f48e01e3fa353f44050c208")
+		my_contract.query_range = {"start": "2018-11-15", "end": "2018-11-15"}
+
+		# overriding ABI with new values
+		my_contract.abi = [{
+							'anonymous': False, 
+							'inputs': [
+										{'indexed': False, 'name': 'token', 'type': 'address[]'}, 
+										{'indexed': False, 'name': 'user', 'type': 'int8[]'}, 
+										{'indexed': False, 'name': 'amount', 'type': 'bool[]'}, 
+										{'indexed': False, 'name': 'balance', 'type': 'bytes32[]'}
+									  ], 
+							'name': 'Withdraw', 'type': 'event'}]
+
+		# test data to inject into DataFrame for testing (this data does not represent ABI's types)
+		test_data = "".join(["0x",
+						   "0000000000000000000000000000000000000000000000000000000000000040",  # address
+						   "00000000000000000000000000000000000000000000000000000000000000A0",  # int
+						   "0000000000000000000000000000000000000000000000000000000000000002",
+						   "0000000000000000000000000000000000000000000000000000000000000000",  # [0000000000000000000000000000000000000000,
+						   "0000000000000000000000004e15361fd6b4bb609fa63c81a2be19d873717870",  # 4e15361fd6b4bb609fa63c81a2be19d873717870]
+						   "0000000000000000000000000000000000000000000000000000000000000002",
+						   "000000000000000000000000000000000000000000000000000000000000001c",  # [28,
+						   "000000000000000000000000000000000000000000000000000000000000001c",  # 28]
+						   "0000000000000000000000000000000000000000000000000000000000000140",  # bytes32
+						   "00000000000000000000000000000000000000000000000000000000000001A0",  # bool
+						   "0000000000000000000000000000000000000000000000000000000000000002",
+						   "58195c401a8d174bd01f666948a1a2400c2bc01f5a8a80aa5d1559a192d89a30",  # [58195c401a8d174bd01f666948a1a2400c2bc01f5a8a80aa5d1559a192d89a30
+						   "0206a07fec44b8720a37debd0c251824daf65a3725de7aa58fd0d6222f7acf80",  # 0206a07fec44b8720a37debd0c251824daf65a3725de7aa58fd0d6222f7acf80]
+						   "0000000000000000000000000000000000000000000000000000000000000002", 
+						   "0000000000000000000000000000000000000000000000000000000000000000",  # [False,
+						   "0000000000000000000000000000000000000000000000000000000000000001"])  # True]
+
+		# create DataFrame for testing
+		df = pd.DataFrame({
+			'transaction_hash': '0x762a85b8f67862f3a9558c586f12bc668774cc0789bf66920a1b399684ed4ae9', 
+			'block_timestamp': pd.Timestamp('2018-11-15 00:01:59'), 
+			'address': '0x2a0c0dbecc7e4d658f48e01e3fa353f44050c208', 
+			'topics_0': list(my_contract.events.keys())[0], 
+			'topics_1': None, 
+			'topics_2': None, 
+			'topics_3': None, 
+			'transaction_data': test_data
+			}, index=[0])
+
+		returned_data = ethdata.clean_event_logs_df(df, my_contract).to_dict("r")[0]
+		for key in ("transaction_hash", "block_timestamp", "event_name", "address"):
+			returned_data.pop(key)
+
+		# create DataFrame for testing
+		expected_data = {'data_token': ['0x0000000000000000000000000000000000000000', 
+										 '0x4e15361fd6b4bb609fa63c81a2be19d873717870'], 
+						'data_user': [28.0, 28.0], 
+						'data_amount': ['58195c401a8d174bd01f666948a1a2400c2bc01f5a8a80aa5d1559a192d89a30', 
+										'0206a07fec44b8720a37debd0c251824daf65a3725de7aa58fd0d6222f7acf80'], 
+						'data_balance': [False, True]
+						}			
+
+		for key in returned_data:
+			assert returned_data[key] == expected_data[key]
+
+	def test_dynamic_array_handling_with_topics(self):
+		eg_array_types = ["address[]", "int8[]", "bytes32[]", "bool[]"]
+		my_contract = ethdata.Contract("0x6690819cb98c1211a8e38790d6cd48316ed518db")
+
+		# overriding ABI with new values
+		my_contract.abi = [{
+							'anonymous': False, 
+							'inputs': [	
+										{'indexed': True, 'name': 'token', 'type': 'address[]'}, 
+										{'indexed': True, 'name': 'user', 'type': 'int8[]'},
+										{'indexed': True, 'name': 'amount', 'type': 'bytes32[]'}, 
+										{'indexed': True, 'name': 'mount', 'type': 'bool[]'} 
+									  ], 
+							'name': 'Withdraw', 'type': 'event'}]
+
+		# create DataFrame for testing
+		df = pd.DataFrame({
+			'transaction_hash': '0x762a85b8f67862f3a9558c586f12bc668774cc0789bf66920a1b399684ed4ae9', 
+			'block_timestamp': pd.Timestamp('2018-11-15 00:01:59'), 
+			'address': '0x2a0c0dbecc7e4d658f48e01e3fa353f44050c208', 
+			'topics_0': list(my_contract.events.keys())[0], 
+			'topics_1': "0000000000000000000000000000000000000000000000000000000000000040", 
+			'topics_2': "00000000000000000000000000000000000000000000000000000000000000A0", 
+			'topics_3': "0000000000000000000000000000000000000000000000000000000000000002",
+			'topics_4': "0000000000000000000000000000000000000000000000000000000000000040", 
+			'transaction_data': None
+			}, index=[0])
+
+		with pytest.warns(UserWarning) as record:
+			ethdata.clean_event_logs_df(df, my_contract)
+		for n, warning in enumerate(record):
+			if warning.category == UserWarning:
+				assert str(warning.message) == f"{eg_array_types[n]} is not yet supported passed as topic"
+
+	def test_unsupported_array_types_with_topics(self):
+		eg_unsupported_types = ['address[][]', 'int8[2][]', 'bytes32[][3]', 'bool[2][3]', 'bytes', 'string[2]', 'string[]', 'string']
+		my_contract = ethdata.Contract("0x6690819cb98c1211a8e38790d6cd48316ed518db")
+
+		# overriding ABI with new values
+		my_contract.abi = [{
+					'anonymous': False, 
+					'inputs': [	
+								{'indexed': True, 'name': 'token', 'type': 'address[][]'}, 
+								{'indexed': True, 'name': 'user', 'type': 'int8[2][]'},
+								{'indexed': True, 'name': 'amount', 'type': 'bytes32[][3]'}, 
+								{'indexed': True, 'name': 'mount', 'type': 'bool[2][3]'}, 
+								{'indexed': True, 'name': 'balance', 'type': 'bytes'},
+								{'indexed': True, 'name': 'roken', 'type': 'string[2]'},
+								{'indexed': True, 'name': 'taunt', 'type': 'string[]'},
+								{'indexed': True, 'name': 'ruser', 'type': 'string'}
+							  ], 
+					'name': 'Withdraw', 'type': 'event'}]
+
+		# create DataFrame for testing
+		df = pd.DataFrame({
+			'transaction_hash': '0x762a85b8f67862f3a9558c586f12bc668774cc0789bf66920a1b399684ed4ae9', 
+			'block_timestamp': pd.Timestamp('2018-11-15 00:01:59'), 
+			'address': '0x2a0c0dbecc7e4d658f48e01e3fa353f44050c208', 
+			'topics_0': list(my_contract.events.keys())[0], 
+			'topics_1': "0000000000000000000000000000000000000000000000000000000000000040", 
+			'topics_2': "00000000000000000000000000000000000000000000000000000000000000A0", 
+			'topics_3': "0000000000000000000000000000000000000000000000000000000000000002",
+			'topics_4': "0000000000000000000000000000000000000000000000000000000000000040", 
+			'topics_5': "00000000000000000000000000000000000000000000000000000000000000A0", 
+			'topics_6': "0000000000000000000000000000000000000000000000000000000000000002", 
+			'topics_7': "00000000000000000000000000000000000000000000000000000000000000A0", 
+			'topics_8': "0000000000000000000000000000000000000000000000000000000000000002", 
+			'transaction_data': None
+			}, index=[0])
+
+		with pytest.warns(UserWarning) as record:
+			ethdata.clean_event_logs_df(df, my_contract)
+		for n, warning in enumerate(record):
 			assert str(warning.message) == f"{eg_unsupported_types[n]} is not yet supported"
+
+	def test_unsupported_array_types_with_data(self):
+		eg_unsupported_types = ['address[][]', 'int8[2][]', 'bytes32[][3]', 'bool[2][3]', 'bytes', 'string[2]', 'string[]', 'string']
+		my_contract = ethdata.Contract("0x6690819cb98c1211a8e38790d6cd48316ed518db")
+
+		# overriding ABI with new values
+		my_contract.abi = [{
+							'anonymous': False, 
+							'inputs': [	
+										{'indexed': False, 'name': 'token', 'type': 'address[][]'}, 
+										{'indexed': False, 'name': 'user', 'type': 'int8[2][]'},
+										{'indexed': False, 'name': 'amount', 'type': 'bytes32[][3]'}, 
+										{'indexed': False, 'name': 'mount', 'type': 'bool[2][3]'}, 
+										{'indexed': False, 'name': 'balance', 'type': 'bytes'},
+										{'indexed': False, 'name': 'roken', 'type': 'string[2]'},
+										{'indexed': False, 'name': 'taunt', 'type': 'string[]'},
+										{'indexed': False, 'name': 'ruser', 'type': 'string'}
+									  ], 
+							'name': 'Withdraw', 'type': 'event'}]
+
+		# test data to inject into DataFrame for testing (this data does not represent ABI's types)
+		test_data = "".join([
+			   "0000000000000000000000000000000000000000000000000000000000000040",
+			   "00000000000000000000000000000000000000000000000000000000000000A0",
+			   "0000000000000000000000000000000000000000000000000000000000000002",
+			   "000000000000000000000000000000000000000000000000000000000000032d",
+			   "0000000000000000000000004e15361fd6b4bb609fa63c81a2be19d873717870",
+			   "0000000000000000000000000000000000000000000000000000000000000002",
+			   "000000000000000000000000000000000000000000000000000000000000001c",
+			   "0000000000000000000000000000000000000000000000000000000000000001"])
+
+		# create DataFrame for testing
+		df = pd.DataFrame({
+			'transaction_hash': '0x762a85b8f67862f3a9558c586f12bc668774cc0789bf66920a1b399684ed4ae9', 
+			'block_timestamp': pd.Timestamp('2018-11-15 00:01:59'), 
+			'address': '0x2a0c0dbecc7e4d658f48e01e3fa353f44050c208', 
+			'topics_0': list(my_contract.events.keys())[0], 
+			'topics_1': None, 
+			'topics_2': None, 
+			'topics_3': None, 
+			'transaction_data': test_data
+			}, index=[0])
+
+		with pytest.warns(UserWarning) as record:
+			ethdata.clean_event_logs_df(df, my_contract)
+		for n, warning in enumerate(record):
+			if warning.category == UserWarning:
+				assert str(warning.message) == f"{eg_unsupported_types[n]} is not yet supported"
