@@ -1,6 +1,6 @@
 [run]
 branch = True
-source = ethdata
+source = eth-data-tools
 
 [report]
 exclude_lines =
