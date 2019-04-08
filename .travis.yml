@@ -9,10 +9,9 @@ env:
     - secure: rlnB8hfmrbmOBNEKFt7Xp/ZqDtJL3P02P3I/gWDPq7TO4yfXJnOaSyusIRY2hFdsuSOlHxVFOggCfXhY7adIBTzsrOmN1PvprIeoWlwsLgwHHaGPl3/Vi2Z5Ol1l6PoE8Dy6QKfgJX547bPmb/OzrMZYOiMst+LrYH+JYXn1mpUvtzFf4C25X5aYBTEBYmsG47s0TR3aZfEfdpBMtjw+hBBZxW181B7ISxD/7/UBu6U6J1b8G/aXYGzvwW806/XV1PEQlMhEtRkMDkFvHUQulNOSkNmy77uWmZBtALe98Z2Vp3qk+HTf/kZW+0oA8K6xH8vRrdQyq+2raYaBuBCuWjZlUnY8t0UaGwpcjfI/5G6O6zr5FQCKB0XdwYHufjpja8k8uOrDdDf7GmnPXmCX7QNSFtSUMCd5TGVWy6k/Owcs/LKKi70EBrYqoUQvt6b3jTU0G3/oj1Dr/koQscA2C6z2E0OY/QoKZ0aDREcT/xvLjNRkGSph8K30G41/pIncln/YlCfUe1dfvUPfnuCJ68w0lN1sT1cLnKBIGB3VF1dxbUkLG/r++hS6wUNAecB1G3lkgyQWESNwK6Y4XHLqnefPsz5Ukj7bLXHo5rYvJPnPqosjwQTNQsrlVGGXKZl2dCng4dnPvq9PcuIgl5d3P+fm1FJe1qru0NEZpTj/AOo=
 before_install:
   - openssl aes-256-cbc -K $encrypted_b526b8425f11_key -iv $encrypted_b526b8425f11_iv
-  -in gcloud_credentials.json.enc -out gcloud_credentials.json -d
+  - in gcloud_credentials.json.enc -out gcloud_credentials.json -d
 install:
   - python setup.py develop
-script:
-  - pytest
+script: pytest
 after_success:
   - codecov
