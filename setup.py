@@ -29,9 +29,9 @@ setuptools.setup(
     	'google-cloud-bigquery[pyarrow]',
     	'pandas'
     ],
-	tests_require=[
-		'pytest',
-		'pytest-cov',
-		'codecov'
-	]
+    tests_require=[
+        'pytest',
+        'pytest-cov',
+        'codecov'
+    ]
 )
