@@ -6,3 +6,4 @@ dist
 build
 
 *.DS_Store
+gcloud_credentials.json
