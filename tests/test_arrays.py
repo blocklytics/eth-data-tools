@@ -10,9 +10,11 @@ import pandas as pd
 class TestArraysTransactionReceipts:
 	"""Test cases:
         1. Decoding an array from Bancor smart contract
-        2. Decoding a custom ABI and transaction for static arrays
-        3. Decoding a custom ABI and transaction for dynamic arrays
-        4. Decoding a custom ABI and transaction for 2D arrays and types bytes and string[]
+        2. Decoding a custom ABI and transaction for string and bytes type 
+           (based on Augar smart contract)
+        3. Decoding a custom ABI and transaction for static arrays
+        4. Decoding a custom ABI and transaction for dynamic arrays
+        5. Decoding a custom ABI and transaction for 2D arrays and types bytes and string[]
     """
 
 	def test_static_array_in_bancor(self):
@@ -39,7 +41,90 @@ class TestArraysTransactionReceipts:
 						}
 
 		for key in returned_data:
-			assert returned_data[key] == expected_data[key]	
+			assert returned_data[key] == expected_data[key]
+
+	def test_string_and_bytes(self):
+		my_contract = ethdata.Contract("0xE991247b78F937D7B69cFC00f1A487A293557677")
+		my_contract.query_range = {"start": "2019-04-01", "end": "2019-04-01"}
+		# overriding ABI with new values
+		my_contract.abi = [{
+						"constant":False,
+						"inputs":[{"name":"_endTime","type":"uint256"},{"name":"_feePerEthInWei","type":"uint256"},
+								  {"name":"_denominationToken","type":"address"},{"name":"_designatedReporterAddress","type":"address"},
+								  {"name":"_minPrice","type":"int256"},{"name":"_maxPrice","type":"int256"},
+								  {"name":"_numTicks","type":"uint256"},{"name":"_topic","type":"bytes32"},
+								  {"name":"_description","type":"bytes"},{"name":"_extraInfo","type":"string"}],
+						"name":"createScalarMarket",
+						"outputs":[{"name":"_newMarket","type":"address"}],
+						"payable":True,
+						"stateMutability":"payable",
+						"type":"function"}]
+		
+		# test data to inject into DataFrame for testing
+		test_data = [
+				"000000000000000000000000000000000000000000000000000000005d160848",  # uint
+				"0000000000000000000000000000000000000000000000000011c37937e08000",  # uint
+				"000000000000000000000000d5524179cb7ae012f5b642c1d6d700bbaa76b96b",  # address
+				"000000000000000000000000d953e24b1433fbcce94b5f5b282aa67b7e6d59fb",  # address
+				"0000000000000000000000000000000000000000000000008ac7230489e80000",  # int
+				"000000000000000000000000000000000000000000000001158e460913d00000",  # int
+				"0000000000000000000000000000000000000000000000000000000000002710",  # uint
+				"7665696c00000000000000000000000000000000000000000000000000000000",  # bytes32
+				"0000000000000000000000000000000000000000000000000000000000000140",  # string - offset is 10
+				"00000000000000000000000000000000000000000000000000000000000001a0",  # bytes - offset is 13
+				"000000000000000000000000000000000000000000000000000000000000003c",  # num of elements bytes - 60 (two rows)
+				"486f77206d616e79206c697374696e67732077696c6c20446546692050756c73",
+				"652068617665206279204a756e6520323874682c2032303139203f2000000000",  
+				"00000000000000000000000000000000000000000000000000000000000000f0",  # num of element string - 240 (eight rows)
+				"7b226c6f6e674465736372697074696f6e223a22446546692050756c73652074",
+				"7261636b73206f70656e2066696e616e6365206170706c69636174696f6e7320",
+				"616e642070726f746f636f6c73206275696c74206f6e20657468657265756d2e",
+				"5c6e5c6e54686973206d61726b657420696e766f6c76657320746865206e756d",
+				"626572206f66206c697374696e67732077686963682063616e20626520666f75",
+				"6e6420696e2074686520666972737420636f6c756d6e2e20222c227461677322",
+				"3a5b5d2c227265736f6c7574696f6e536f75726365223a2268747470733a2f2f",
+				"6465666970756c73652e636f6d2f227d00000000000000000000000000000000"]
+
+		# create DataFrame for testing
+		df = pd.DataFrame({
+					'transaction_hash': '0x498a18373623ca84e7caf058ab13fa288d34117dcd69cf20c7dd58d75e1d033f', 
+					'block_timestamp': pd.Timestamp('2019-02-20 12:00:00+0000', tz='UTC'), 
+					'from_address': '0x59550cdee3fe8685fdb76281f5bbd9a65dc50c51', 
+					'to_address': '0x6690819cb98c1211a8e38790d6cd48316ed518db', 
+					'value': 0.042943815049849295, 
+					'function_signature': list(my_contract.functions.keys())[0],
+					'function_data': "".join(test_data)
+							  }, index=[0])
+
+		# cleaning data in appropriate format
+		returned_data = ethdata.clean_transaction_receipts_df(df, my_contract).iloc[0].to_dict()
+		for key in list(returned_data.keys())[:6]:  # remove unnecessary keys
+			returned_data.pop(key)
+
+		expected_data = {
+						'transaction_hash': '0x498a18373623ca84e7caf058ab13fa288d34117dcd69cf20c7dd58d75e1d033f', 
+						'block_timestamp': pd.Timestamp('2019-04-01 12:00:00+0000', tz='UTC'), 
+						'from_address': '0x59550cdee3fe8685fdb76281f5bbd9a65dc50c51', 
+						'to_address': '0x6690819cb98c1211a8e38790d6cd48316ed518db', 
+						'value': 0.042943815049849295, 
+						'function_name': 'createScalarMarket', 
+						'param__endTime': 1561725000.0, 
+						'param__feePerEthInWei': 5000000000000000.0, 
+						'param__denominationToken': '0xd5524179cb7ae012f5b642c1d6d700bbaa76b96b', 
+						'param__designatedReporterAddress': '0xd953e24b1433fbcce94b5f5b282aa67b7e6d59fb', 
+						'param__minPrice': 1e+19, 'param__maxPrice': 2e+19, 
+						'param__numTicks': 10000.0, 
+						'param__topic': '7665696c00000000000000000000000000000000000000000000000000000000', 
+						'param__description': ('486f77206d616e79206c697374696e67732077696c6c20446546692050756'
+											   'c73652068617665206279204a756e6520323874682c2032303139203f20'), 
+						'param__extraInfo': ('{"longDescription":"DeFi Pulse tracks open finance applications '
+											   'and protocols built on ethereum.\\n\\nThis market involves the '
+											   'number of listings which can be found in the first column. '
+											   '","tags":[],"resolutionSource":"https://defipulse.com/"}')
+						}
+
+		for key in returned_data:
+			assert returned_data[key] == expected_data[key]
 
 	def test_fake_static_array(self):
 		my_contract = ethdata.Contract("0x6690819cb98c1211a8e38790d6cd48316ed518db")
@@ -178,7 +263,7 @@ class TestArraysTransactionReceipts:
 			assert returned_data[key] == expected_result[key]
 
 	def test_unsupported_array_types(self):
-		eg_unsupported_types = ['address[][]', 'int8[2][]', 'bytes32[][3]', 'bool[2][3]', 'bytes', 'string[2]', 'string[]', 'string']
+		eg_unsupported_types = ['address[][]', 'int8[2][]', 'bytes32[][3]', 'bool[2][3]', 'string[2]', 'string[]']
 		my_contract = ethdata.Contract("0x6690819cb98c1211a8e38790d6cd48316ed518db")
 
 		# overriding ABI with new values
@@ -186,8 +271,7 @@ class TestArraysTransactionReceipts:
 							'constant': False, 
 							'inputs': [{'name': '_jack', 'type': 'address[][]'}, {'name': '_price', 'type': 'int8[2][]'},
 									   {'name': '_yuri', 'type': 'bytes32[][3]'}, {'name': '_soap', 'type': 'bool[2][3]'},
-									   {'name': '_kelly', 'type': 'bytes'}, {'name': '_greg', 'type': 'string[2]'},
-									   {'name': '_thomas', 'type': 'string[]'}, {'name': '_makarov', 'type': 'string'}], 
+									   {'name': '_greg', 'type': 'string[2]'}, {'name': '_thomas', 'type': 'string[]'}], 
 							'name': 'registerEtherToken', 
 							'outputs': [], 
 							'payable': False, 
@@ -202,8 +286,6 @@ class TestArraysTransactionReceipts:
 			   "0000000000000000000000000000000000000000000000000000000000000002",
 			   "000000000000000000000000000000000000000000000000000000000000032d",
 			   "0000000000000000000000004e15361fd6b4bb609fa63c81a2be19d873717870",
-			   "0000000000000000000000000000000000000000000000000000000000000002",
-			   "000000000000000000000000000000000000000000000000000000000000001c",
 			   "0000000000000000000000000000000000000000000000000000000000000001"]
 
 		# create DataFrame for testing
@@ -217,22 +299,123 @@ class TestArraysTransactionReceipts:
 			'function_data': "".join(test_data)
 					  }, index=[0])
 
-		with pytest.warns(UserWarning) as record:
+		with pytest.warns(Exception) as record:
 			ethdata.clean_transaction_receipts_df(df, my_contract)
+		record = [warning for warning in record if warning.category == UserWarning]
 		for n, warning in enumerate(record):
-			if warning.category == UserWarning:
-				assert str(warning.message) == f"{eg_unsupported_types[n]} is not yet supported"
+			assert str(warning.message) == f"{eg_unsupported_types[n]} is not yet supported"
 
 
 class TestArraysEventLogs:
 	"""Test cases:
-        1. Decoding a custom ABI and an event log for static arrays - data passed in event data
-        2. Decoding a custom ABI and an event log for static arrays - data passed in event topics
-        3. Decoding a custom ABI and an event log for dynamic arrays - data passed in event data
-        4. Decoding a custom ABI and an event log for dynamic arrays - data passed in event topics
-        5. Decoding a custom ABI and an event log to test for warning with unsupported types - data passed in event data
-        6. Decoding a custom ABI and an event log to test for warning with unsupported types - data passed in event topics
+		1. Decoding a string from Augur smart contract
+		2. Decoding a custom ABI and an event log for string and bytes type
+           (based on Augur smart contract)
+        3. Decoding a custom ABI and an event log for static arrays - data passed in event data
+        4. Decoding a custom ABI and an event log for static arrays - data passed in event topics
+        5. Decoding a custom ABI and an event log for dynamic arrays - data passed in event data
+        6. Decoding a custom ABI and an event log for dynamic arrays - data passed in event topics
+        7. Decoding a custom ABI and an event log to test for warning with unsupported types - data passed in event data
+        8. Decoding a custom ABI and an event log to test for warning with unsupported types - data passed in event topics
     """
+
+
+	def test_string_in_augur(self):
+		my_contract = ethdata.Contract("0x75228dce4d82566d93068a8d5d49435216551599")
+		my_contract.query_range = {"start": "2019-04-01", "end": "2019-04-01"}
+		df_test = my_contract.event_logs
+		returned_data = df_test.iloc[55]
+
+		assert returned_data.data_description == "How many listings will DeFi Pulse have by June 28th, 2019 ? "
+		assert returned_data.data_extraInfo == ('{"longDescription":"DeFi Pulse tracks open finance applications '
+												'and protocols built on ethereum.\\n\\nThis market involves the '
+												'number of listings which can be found in the first column. '
+												'","tags":[],"resolutionSource":"https://defipulse.com/"}')
+
+	def test_bytes_and_string(self):
+		my_contract = ethdata.Contract("0x75228dce4d82566d93068a8d5d49435216551599")
+		my_contract.query_range = {"start": "2019-04-01", "end": "2019-04-01"}
+		# overriding ABI with new values
+		my_contract.abi = [{
+							'anonymous': False, 
+							'inputs': [	
+										{'indexed': True, 'name': 'topic', 'type': 'bytes32'}, 
+										{'indexed': True, 'name': 'universe', 'type': 'address'},
+										{'indexed': True, 'name': 'marketCreator', 'type': 'address'}, 
+										{'indexed': False, 'name': 'description', 'type': 'bytes'}, 
+										{'indexed': False, 'name': 'extraInfo', 'type': 'string'},
+										{'indexed': False, 'name': 'market', 'type': 'address'}, 
+										{'indexed': False, 'name': 'outcomes', 'type': 'bytes32[]'},
+										{'indexed': False, 'name': 'marketCreationFee', 'type': 'uint256'}, 
+										{'indexed': False, 'name': 'minPrice', 'type': 'int256'}, 
+										{'indexed': False, 'name': 'maxPrice', 'type': 'int256'},
+										{'indexed': False, 'name': 'marketType', 'type': 'uint8'}],
+							'name': 'MarketCreated', 'type': 'event'}]
+
+		# test data to inject into DataFrame for testing
+		test_data = "".join([
+					"0x",
+					"0000000000000000000000000000000000000000000000000000000000000100",
+					"0000000000000000000000000000000000000000000000000000000000000160",
+					"0000000000000000000000007fb0a15484f52ef282901a67c07c946d753e4c3e",
+					"0000000000000000000000000000000000000000000000000000000000000280",
+					"0000000000000000000000000000000000000000000000000098912c1958a9cf",
+					"0000000000000000000000000000000000000000000000008ac7230489e80000",
+					"000000000000000000000000000000000000000000000001158e460913d00000",
+					"0000000000000000000000000000000000000000000000000000000000000002",
+					"000000000000000000000000000000000000000000000000000000000000003c",
+					"486f77206d616e79206c697374696e67732077696c6c20446546692050756c73",
+					"652068617665206279204a756e6520323874682c2032303139203f2000000000",
+					"00000000000000000000000000000000000000000000000000000000000000f0",
+					"7b226c6f6e674465736372697074696f6e223a22446546692050756c73652074",
+					"7261636b73206f70656e2066696e616e6365206170706c69636174696f6e7320",
+					"616e642070726f746f636f6c73206275696c74206f6e20657468657265756d2e",
+					"5c6e5c6e54686973206d61726b657420696e766f6c76657320746865206e756d",
+					"626572206f66206c697374696e67732077686963682063616e20626520666f75",
+					"6e6420696e2074686520666972737420636f6c756d6e2e20222c227461677322",
+					"3a5b5d2c227265736f6c7574696f6e536f75726365223a2268747470733a2f2f",
+					"6465666970756c73652e636f6d2f227d00000000000000000000000000000000",
+					"0000000000000000000000000000000000000000000000000000000000000000"])
+
+		# create DataFrame for testing
+		df = pd.DataFrame({
+			'transaction_hash': '0x762a85b8f67862f3a9558c586f12bc668774cc0789bf66920a1b399684ed4ae9', 
+			'block_timestamp': pd.Timestamp('2018-11-15 00:01:59'), 
+			'address': '0x2a0c0dbecc7e4d658f48e01e3fa353f44050c208', 
+			'topics_0': list(my_contract.events.keys())[0], 
+			'topics_1': "0x7665696c00000000000000000000000000000000000000000000000000000000", 
+			'topics_2': "0x000000000000000000000000e991247b78f937d7b69cfc00f1a487a293557677", 
+			'topics_3': "0x000000000000000000000000d953e24b1433fbcce94b5f5b282aa67b7e6d59fb",
+			'topics_4': None, 
+			'transaction_data': test_data
+			}, index=[0])
+
+		# cleaning data in appropriate format
+		returned_data = ethdata.clean_event_logs_df(df, my_contract).to_dict("r")[0]
+		for key in ("transaction_hash", "block_timestamp", "event_name", "address"):
+			returned_data.pop(key)
+
+		expected_data = {
+						'topic_topic': '0x7665696c00000000000000000000000000000000000000000000000000000000', 
+						'topic_universe': '0xe991247b78f937d7b69cfc00f1a487a293557677', 
+						'topic_marketCreator': '0xd953e24b1433fbcce94b5f5b282aa67b7e6d59fb', 
+						'data_description': ('486f77206d616e79206c697374696e67732077696c6c20446546692050756c7'
+											'3652068617665206279204a756e6520323874682c2032303139203f20'), 
+						'data_extraInfo': ('{"longDescription":"DeFi Pulse tracks open finance applications '
+										   'and protocols built on ethereum.\\n\\nThis market involves the '
+										   'number of listings which can be found in the first column. '
+										   '","tags":[],"resolutionSource":"https://defipulse.com/"}'), 
+						'data_market': '0x7fb0a15484f52ef282901a67c07c946d753e4c3e', 
+						'data_outcomes': [], 
+						'data_marketCreationFee': 4.29438150498493e+16, 
+						'data_minPrice': 1e+19, 
+						'data_maxPrice': 2e+19, 
+						'data_marketType': 2.0
+						}
+
+		for key in returned_data:
+			assert returned_data[key] == expected_data[key]
+
 	def test_static_array_handling_with_data(self):
 		my_contract = ethdata.Contract("0x2a0c0dbecc7e4d658f48e01e3fa353f44050c208")
 		my_contract.query_range = {"start": "2018-11-15", "end": "2018-11-15"}
@@ -327,9 +510,9 @@ class TestArraysEventLogs:
 
 		with pytest.warns(UserWarning) as record:
 			ethdata.clean_event_logs_df(df, my_contract)
+		record = [warning for warning in record if warning.category == UserWarning]
 		for n, warning in enumerate(record):
-			if warning.category == UserWarning:
-				assert str(warning.message) == f"{eg_array_types[n]} is not yet supported passed as topic"
+			assert str(warning.message) == f"{eg_array_types[n]} is not yet supported passed as topic"
 
 	def test_dynamic_array_handling_with_data(self):
 		my_contract = ethdata.Contract("0x2a0c0dbecc7e4d658f48e01e3fa353f44050c208")
@@ -423,12 +606,12 @@ class TestArraysEventLogs:
 
 		with pytest.warns(UserWarning) as record:
 			ethdata.clean_event_logs_df(df, my_contract)
+		record = [warning for warning in record if warning.category == UserWarning]
 		for n, warning in enumerate(record):
-			if warning.category == UserWarning:
-				assert str(warning.message) == f"{eg_array_types[n]} is not yet supported passed as topic"
+			assert str(warning.message) == f"{eg_array_types[n]} is not yet supported passed as topic"
 
 	def test_unsupported_array_types_with_topics(self):
-		eg_unsupported_types = ['address[][]', 'int8[2][]', 'bytes32[][3]', 'bool[2][3]', 'bytes', 'string[2]', 'string[]', 'string']
+		eg_unsupported_types = ['address[][]', 'int8[2][]', 'bytes32[][3]', 'bool[2][3]', 'string[2]', 'string[]']
 		my_contract = ethdata.Contract("0x6690819cb98c1211a8e38790d6cd48316ed518db")
 
 		# overriding ABI with new values
@@ -439,10 +622,8 @@ class TestArraysEventLogs:
 								{'indexed': True, 'name': 'user', 'type': 'int8[2][]'},
 								{'indexed': True, 'name': 'amount', 'type': 'bytes32[][3]'}, 
 								{'indexed': True, 'name': 'mount', 'type': 'bool[2][3]'}, 
-								{'indexed': True, 'name': 'balance', 'type': 'bytes'},
 								{'indexed': True, 'name': 'roken', 'type': 'string[2]'},
 								{'indexed': True, 'name': 'taunt', 'type': 'string[]'},
-								{'indexed': True, 'name': 'ruser', 'type': 'string'}
 							  ], 
 					'name': 'Withdraw', 'type': 'event'}]
 
@@ -465,11 +646,12 @@ class TestArraysEventLogs:
 
 		with pytest.warns(UserWarning) as record:
 			ethdata.clean_event_logs_df(df, my_contract)
+		record = [warning for warning in record if warning.category == UserWarning]
 		for n, warning in enumerate(record):
 			assert str(warning.message) == f"{eg_unsupported_types[n]} is not yet supported"
 
 	def test_unsupported_array_types_with_data(self):
-		eg_unsupported_types = ['address[][]', 'int8[2][]', 'bytes32[][3]', 'bool[2][3]', 'bytes', 'string[2]', 'string[]', 'string']
+		eg_unsupported_types = ['address[][]', 'int8[2][]', 'bytes32[][3]', 'bool[2][3]', 'string[2]', 'string[]']
 		my_contract = ethdata.Contract("0x6690819cb98c1211a8e38790d6cd48316ed518db")
 
 		# overriding ABI with new values
@@ -480,10 +662,8 @@ class TestArraysEventLogs:
 										{'indexed': False, 'name': 'user', 'type': 'int8[2][]'},
 										{'indexed': False, 'name': 'amount', 'type': 'bytes32[][3]'}, 
 										{'indexed': False, 'name': 'mount', 'type': 'bool[2][3]'}, 
-										{'indexed': False, 'name': 'balance', 'type': 'bytes'},
 										{'indexed': False, 'name': 'roken', 'type': 'string[2]'},
-										{'indexed': False, 'name': 'taunt', 'type': 'string[]'},
-										{'indexed': False, 'name': 'ruser', 'type': 'string'}
+										{'indexed': False, 'name': 'taunt', 'type': 'string[]'}
 									  ], 
 							'name': 'Withdraw', 'type': 'event'}]
 
@@ -512,6 +692,6 @@ class TestArraysEventLogs:
 
 		with pytest.warns(UserWarning) as record:
 			ethdata.clean_event_logs_df(df, my_contract)
+		record = [warning for warning in record if warning.category == UserWarning]
 		for n, warning in enumerate(record):
-			if warning.category == UserWarning:
-				assert str(warning.message) == f"{eg_unsupported_types[n]} is not yet supported"
+			assert str(warning.message) == f"{eg_unsupported_types[n]} is not yet supported"
