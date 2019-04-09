@@ -299,7 +299,7 @@ class TestArraysTransactionReceipts:
 			'function_data': "".join(test_data)
 					  }, index=[0])
 
-		with pytest.warns(Exception) as record:
+		with pytest.warns(UserWarning) as record:
 			ethdata.clean_transaction_receipts_df(df, my_contract)
 		record = [warning for warning in record if warning.category == UserWarning]
 		for n, warning in enumerate(record):
