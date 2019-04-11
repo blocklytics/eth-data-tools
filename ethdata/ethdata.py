@@ -37,11 +37,11 @@ exception_list = {
         "symbol": "UNI-V1",
         "decimals": 0.0
     },
-	"0x09cabec1ead1c0ba254b09efb3ee13841712be14": {
+    "0x09cabec1ead1c0ba254b09efb3ee13841712be14": {
         "name": "Uniswap V1",
         "symbol": "UNI-V1",
         "decimals": 0.0
-	},
+    },
     "0xbb9bc244d798123fde783fcc1c72d3bb8c189413": {
         "name": "TheDAO",
         "symbol": "TheDAO",
@@ -606,7 +606,7 @@ def hex_to_string(val):
     Accepts padded or unpadded values.
     """
     if val is None:
-	    return ""
+        return ""
     s = val.strip('0x').rstrip('0')
     if len(s) % 2 == 1:
         s += "0"
@@ -617,7 +617,7 @@ def hex_to_float(val, decimals = 0):
     
     Returns a float or error (which should be handled in situ).
     """
-    
+
     try:
         val = int(val, 16)
     except:
@@ -639,16 +639,16 @@ def hex_to_bool(val):
     """Converts hex string or boolean integer to a clean boolean value.
     
     Returns a boolean data type True or False
-	"""
-	
+    """
+    
     if type(val) == str:
         val = val.strip("0x").rstrip("0")
-		
+        
     if val:
         return True
     else:
         return False
-	
+    
 def make_tz_naive(val):
     """Converts datetime to timezone naive datetime (rounded down to nearest date)."""
     
@@ -709,54 +709,113 @@ def clean_transaction_receipts_df(df, contract):
             for data_name in data:
                 data_type = contract.functions[row.function_signature]['data'][data_name]
                 raw_row = raw_rows[d]
-
+                print("Initial raw row is: ", raw_row)
+                print("Type is:", data_type)
                 # checking if row is empty
                 if raw_row is None:
                     d += 1
                     continue
 
-                # checking for unsupported type
-                stat1 = data_type.count("[") == 2
-                stat2 = "string[" in data_type
-                if stat1 or stat2:
-                    warnings.warn(f"{data_type} is not yet supported")
-                    df.at[row.Index, 'data_' + data_name] = raw_row
-                    d += 1
-                    continue
-
-                # dynamic array (string, bytes included)
-                if "[]" in data_type or data_type == "string" or data_type == "bytes":
-                    array_offset = int(hex_to_float(raw_row)/32)  # offset of the first element in the array 
-                    array_length = int(clean_hex_data(raw_rows[array_offset], "int"))
+                def dynamic_array(ind):
+                    nonlocal raw_rows, data_type
+                    print("ind is", ind)
+                    print("in raw_row", raw_rows[ind])
+                    print(f"Array offset is {ind}")
+                    array_length = int(clean_hex_data(raw_rows[ind], "int"))
+                    print(f"array_length is {array_length}")
 
                     if data_type == "string" or data_type == "bytes":
+                        print("a string type")
                         num_rows = int(ceil(array_length/32))
                         cut_null = (32 - array_length % 32)*2
                         # iterating through rows of elements and creating a string with them
-                        df.at[row.Index, 'param_' + data_name] = clean_hex_data("".join([raw_rows[i + array_offset + 1] for i in range(num_rows)])[:-cut_null], data_type) 
-                        # making used rows empty
-                        for row_index in range(array_offset, array_offset + num_rows + 1):
+                        result = clean_hex_data("".join([raw_rows[i + ind + 1] for i in range(num_rows)])[:-cut_null], data_type) 
+                        for row_index in range(ind, num_rows + 1 + ind):
+                            print(f"'removing' row with index {row_index}")
                             raw_rows[row_index] = None
+                        return result
+                    elif "[][]" in data_type or data_type == "string[]":
+                        print("Going through dynamic array - second")
+                        data_type = data_type[:-2]
+                        print(data_type)
+                        result = [dynamic_array(int(hex_to_float(raw_rows[ind + 1 +i])/32) + ind + 1) for i in range(array_length)]
+                    elif "][]" in data_type:
+                        print("Going through static array - second")
+                        array_size = int(data_type[data_type.index("[") + 1: data_type.index("][")])
+                        print("array_size is", array_size)
+                        data_type = data_type.replace("[]", "")
+                        inner_array_size = int(data_type[data_type.index("[") + 1: -1])
+                        print("Inner array size", inner_array_size)
+                        result = [static_array(i*inner_array_size + array_offset) for i in range(array_size)]
                     else:
+                        print("1d dynamic array")
                         # iterating through rows of elements and creating a list with them
-                        df.at[row.Index, 'param_' + data_name] = [clean_hex_data(raw_rows[i + array_offset + 1],
-                                                                  data_type.rstrip("[]")) for i in range(array_length)]
-                        # making used rows empty
-                        for row_index in range(array_offset, array_offset + array_length + 1):
-                            raw_rows[row_index] = None
+                        result = [clean_hex_data(raw_rows[i + 1 + ind],
+                                  data_type.rstrip("[]")) for i in range(array_length)]
+                    
+                    # making used rows empty
+                    for row_index in range(ind, ind + array_length + 1):
+                        print(f"'removing' row with index {row_index}")
+                        raw_rows[row_index] = None
+                    print("returning dynamic array", result)
+                    return result
 
-                # static array
-                elif "[" in data_type:
-                    array_size = data_type[data_type.index("[") + 1:-1]
+
+                def static_array(ind):
+                    nonlocal raw_rows, data_type, d
+
+                    if data_type.count("[") == 1:
+                        array_size = int(data_type[data_type.index("[") + 1: -1])
+                    else:
+                        array_size = int(data_type[data_type.index("][") + 2: -1])
+
+                    print("array size is", array_size)
+                    print("ind is ", ind)
                     # iterating through rows of elements and creating a list with them
-                    df.at[row.Index, 'param_' + data_name] = [clean_hex_data(raw_rows[d + i], data_type.rstrip(
-                                                              f"[{array_size}]")) for i in range(int(array_size))]
-                    d += int(array_size) - 1  # moving iteration to a row following the array's last element
+                    if "[][" in data_type or "string[" in data_type or "string[" in data_type or "bytes[" in data_type:
+                        print("Going through dynamic array - second")
+                        data_type = data_type.replace(f"[{array_size}]", "")
+                        result = [dynamic_array(int(hex_to_float(raw_rows[ind + i])/32) + ind) for i in range(array_size)]
+                    elif data_type.count("[") == 1:
+                        result = [clean_hex_data(raw_rows[ind + i], data_type.rstrip(
+                                  f"[{array_size}]")) for i in range(int(array_size))]
+                        print(result, "was added")
+                    else:
+                        print("Going through static array - second")
+                        data_type = data_type.replace(f"[{array_size}]", "")
+                        inner_array_size = int(data_type[data_type.index("[") + 1: -1])
+                        print("Inner array size", inner_array_size)
+                        result = [static_array(i*(inner_array_size) + ind) for i in range(array_size)]
+
+                    for row_index in range(ind, ind + array_size):
+                        raw_rows[row_index] = None
+                    return result
+
+                    # maybe use the nonlocal variable d
+
+
+                stat1 = data_type[-2].isdigit()
+                stat2 = "[" in data_type
+                stat3 = data_type == "string" or data_type == "bytes"
+
+                # dynamic array (string, bytes included)
+                if (not stat1 and stat2) or stat3:
+                    print("Going through dynamic array")
+                    array_offset = int(hex_to_float(raw_row)/32)  # offset of the first element in the array 
+                    df.at[row.Index, 'param_' + data_name] = dynamic_array(array_offset)
+                    raw_rows[array_offset] = None
+                # static array
+                elif stat1 and stat2:
+                    print("Going through static array - first")
+                    df.at[row.Index, 'param_' + data_name] = static_array(d)
                 
                 # not an array  
                 else:
                     df.at[row.Index, 'param_' + data_name] = clean_hex_data(raw_row, data_type)
                 d += 1
+                print(df.at[row.Index, 'param_' + data_name])
+            for index, row in enumerate(raw_rows):
+                print(f"Index: {index}  Row:{row}")
 
         # drop raw data & empty columns
         df.drop(columns=["function_signature", "function_data"], inplace=True)
@@ -842,54 +901,110 @@ def clean_event_logs_df(df, contract):
             for data_name in data:
                 data_type = data[data_name]
                 raw_row = raw_rows[d]
+                print("Initial raw row is: ", raw_row)
+                print("Type is:", data_type)
 
                 # checking if row is empty
                 if raw_row is None:
                     d += 1
                     continue
 
-                # checking for unsupported type
-                stat1 = data_type.count("[") == 2
-                stat2 = "string[" in data_type
-                if stat1 or stat2:
-                    warnings.warn(f"{data_type} is not yet supported")
-                    df.at[row.Index, 'data_' + data_name] = raw_row
-                    d += 1
-                    continue
-
-                # dynamic array (string, bytes included)
-                if "[]" in data_type or data_type == "string" or data_type == "bytes":
-                    array_offset = int(hex_to_float(raw_row)/32)  # offset of the first element in the array 
-                    array_length = int(clean_hex_data(raw_rows[array_offset], "int"))
+                def dynamic_array(ind):
+                    nonlocal raw_rows, data_type
+                    print("ind is", ind)
+                    print("in raw_row", raw_rows[ind])
+                    print(f"Array offset is {ind}")
+                    array_length = int(clean_hex_data(raw_rows[ind], "int"))
+                    print(f"array_length is {array_length}")
 
                     if data_type == "string" or data_type == "bytes":
-                        num_rows = int(ceil(array_length/32))  # should this just be array length?
+                        print("a string type")
+                        num_rows = int(ceil(array_length/32))
                         cut_null = (32 - array_length % 32)*2
                         # iterating through rows of elements and creating a string with them
-                        df.at[row.Index, 'data_' + data_name] = clean_hex_data("".join([raw_rows[i + array_offset + 1] for i in range(num_rows)])[:-cut_null], data_type) 
-                        # making used rows empty
-                        for row_index in range(array_offset, array_offset + num_rows + 1):
+                        result = clean_hex_data("".join([raw_rows[i + ind + 1] for i in range(num_rows)])[:-cut_null], data_type) 
+                        for row_index in range(ind, num_rows + 1 + ind):
+                            print(f"'removing' row with index {row_index}")
                             raw_rows[row_index] = None
+                        return result
+                    elif "[][]" in data_type or data_type == "string[]":
+                        print("Going through dynamic array - second")
+                        data_type = data_type[:-2]
+                        print(data_type)
+                        result = [dynamic_array(int(hex_to_float(raw_rows[ind + 1 +i])/32) + ind + 1) for i in range(array_length)]
+                    elif "][]" in data_type:
+                        print("Going through static array - second")
+                        array_size = int(data_type[data_type.index("[") + 1: data_type.index("][")])
+                        print("array_size is", array_size)
+                        data_type = data_type.replace("[]", "")
+                        inner_array_size = int(data_type[data_type.index("[") + 1: -1])
+                        print("Inner array size", inner_array_size)
+                        result = [static_array(i*inner_array_size + array_offset) for i in range(array_size)]
                     else:
+                        print("1d dynamic array")
                         # iterating through rows of elements and creating a list with them
-                        df.at[row.Index, 'data_' + data_name] = [clean_hex_data(raw_rows[i + array_offset + 1],
-                                                                  data_type.rstrip("[]")) for i in range(array_length)]
-                        # making used rows empty
-                        for row_index in range(array_offset, array_offset + array_length + 1):
-                            raw_rows[row_index] = None
+                        result = [clean_hex_data(raw_rows[i + 1 + ind],
+                                  data_type.rstrip("[]")) for i in range(array_length)]
+                    
+                    # making used rows empty
+                    for row_index in range(ind, ind + array_length + 1):
+                        print(f"'removing' row with index {row_index}")
+                        raw_rows[row_index] = None
+                    print("returning dynamic array", result)
+                    return result
 
-                # static array
-                elif "[" in data_type:
-                    array_size = data_type[data_type.index("[") + 1:-1]
+
+                def static_array(ind):
+                    nonlocal raw_rows, data_type, d
+
+                    if data_type.count("[") == 1:
+                        array_size = int(data_type[data_type.index("[") + 1: -1])
+                    else:
+                        array_size = int(data_type[data_type.index("][") + 2: -1])
+
+                    print("array size is", array_size)
+                    print("ind is ", ind)
                     # iterating through rows of elements and creating a list with them
-                    df.at[row.Index, 'data_' + data_name] = [clean_hex_data(raw_rows[d + i], data_type.rstrip(
-                                                              f"[{array_size}]")) for i in range(int(array_size))]
-                    d += int(array_size) - 1  # moving iteration to a row following the array's last element
+                    if "[][" in data_type or "string[" in data_type or "string[" in data_type or "bytes[" in data_type:
+                        print("Going through dynamic array - second")
+                        data_type = data_type.replace(f"[{array_size}]", "")
+                        result = [dynamic_array(int(hex_to_float(raw_rows[ind + i])/32) + ind) for i in range(array_size)]
+                    elif data_type.count("[") == 1:
+                        result = [clean_hex_data(raw_rows[ind + i], data_type.rstrip(
+                                  f"[{array_size}]")) for i in range(int(array_size))]
+                        print(result, "was added")
+                    else:
+                        print("Going through static array - second")
+                        data_type = data_type.replace(f"[{array_size}]", "")
+                        inner_array_size = int(data_type[data_type.index("[") + 1: -1])
+                        print("Inner array size", inner_array_size)
+                        result = [static_array(i*(inner_array_size) + ind) for i in range(array_size)]
+
+                    for row_index in range(ind, ind + array_size):
+                        raw_rows[row_index] = None
+                    return result
+
+                    # maybe use the nonlocal variable d
+
+
+                stat1 = data_type[-2].isdigit()
+                stat2 = "[" in data_type
+                stat3 = data_type == "string" or data_type == "bytes"
+
+                # dynamic array (string, bytes included)
+                if (not stat1 and stat2) or stat3:
+                    print("Going through dynamic array")
+                    array_offset = int(hex_to_float(raw_row)/32)  # offset of the first element in the array 
+                    df.at[row.Index, 'data_' + data_name] = dynamic_array(array_offset)
+                    raw_rows[array_offset] = None
+                # static array
+                elif stat1 and stat2:
+                    print("Going through static array - first")
+                    df.at[row.Index, 'data_' + data_name] = static_array(d)
                 
-                # not an array
+                # not an array  
                 else:
                     df.at[row.Index, 'data_' + data_name] = clean_hex_data(raw_row, data_type)
-                    
                 d += 1
 
         # drop raw data & empty columns
