@@ -13,6 +13,6 @@ before_install:
 install:
   - python setup.py develop
 script: 
-  - pytest --cov-report=xml --cov=blackjack tests/
+  - pytest --cov-report=xml --cov=ethdata tests/
 after_success:
   - codecov
