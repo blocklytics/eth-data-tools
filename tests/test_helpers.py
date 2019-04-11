@@ -38,7 +38,7 @@ class TestHelpers(object):
         assert ethdata.clean_hex_data("0xdeadbeef", "int256") == 3_735_928_559
         assert ethdata.clean_hex_data("0xdeadbeef", "int64") == 3_735_928_559
         assert ethdata.clean_hex_data("0xdeadbeef", "int8") == 3_735_928_559
-        assert ethdata.clean_hex_data("5343484150000000000000000000000000000000000000000000000000000000", "string") == "5343484150000000000000000000000000000000000000000000000000000000"
+        assert ethdata.clean_hex_data("5343484150000000000000000000000000000000000000000000000000000000", "string") == "SCHAP"
         assert ethdata.clean_hex_data(0, "bool") == False
         with pytest.warns(UserWarning):
              assert ethdata.clean_hex_data("0xdeadbeef", "unknown") == "0xdeadbeef"

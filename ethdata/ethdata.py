@@ -648,13 +648,6 @@ def hex_to_bool(val):
         return True
     else:
         return False
-
-def hex_to_string(val):
-    """Converts hex string to a clean string.
-    
-    Returns a string data type
-    """
-    return str(bytearray.fromhex(val).decode(encoding="Latin1"))
 	
 def make_tz_naive(val):
     """Converts datetime to timezone naive datetime (rounded down to nearest date)."""
