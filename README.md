@@ -1,4 +1,5 @@
 # eth-data-tools
+[![PyPI version](https://badge.fury.io/py/eth-data-tools.svg)](https://badge.fury.io/py/eth-data-tools)
 [![Build Status](https://travis-ci.org/blocklytics/eth-data-tools.svg?branch=master)](https://travis-ci.org/blocklytics/eth-data-tools)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
