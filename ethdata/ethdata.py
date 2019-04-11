@@ -7,6 +7,7 @@ import string
 from Crypto.Hash import keccak
 from google.cloud import bigquery
 import pandas as pd
+from math import ceil
 
 # BigQuery Public Ethereum Datasets
 public_dataset = {
@@ -658,8 +659,8 @@ def clean_hex_data(val, val_type):
         return hex_to_address(val)
     elif val_type.startswith("uint") or val_type.startswith("int"):  # convert to float
         return hex_to_float(val)
-    elif val_type == "string":         # keep as hex
-        return val
+    elif val_type == "string":
+        return hex_to_string(val)
     elif val_type.startswith("bytes"): # keep as hex
         return val
     elif val_type == "bool":
@@ -716,33 +717,43 @@ def clean_transaction_receipts_df(df, contract):
 
                 # checking for unsupported type
                 stat1 = data_type.count("[") == 2
-                stat2 = data_type == "bytes"
-                stat3 = "string" in data_type
-                if stat1 or stat2 or stat3:
+                stat2 = "string[" in data_type
+                if stat1 or stat2:
                     warnings.warn(f"{data_type} is not yet supported")
                     df.at[row.Index, 'data_' + data_name] = raw_row
                     d += 1
                     continue
 
-                if "[" in data_type:
-                    array_size = data_type[data_type.index("[") + 1:-1]
+                # dynamic array (string, bytes included)
+                if "[]" in data_type or data_type == "string" or data_type == "bytes":
+                    array_offset = int(hex_to_float(raw_row)/32)  # offset of the first element in the array 
+                    array_length = int(clean_hex_data(raw_rows[array_offset], "int"))
 
-                    # static array
-                    if array_size:
-                        # iterating through rows of elements and creating a list with them
-                        df.at[row.Index, 'param_' + data_name] = [clean_hex_data(raw_rows[d + i], data_type.rstrip(
-                                                                  f"[{array_size}]")) for i in range(int(array_size))]
-                        d += int(array_size) - 1  # moving iteration to a row following the array's last element
-                    # dynamic array
+                    if data_type == "string" or data_type == "bytes":
+                        num_rows = int(ceil(array_length/32))
+                        cut_null = (32 - array_length % 32)*2
+                        # iterating through rows of elements and creating a string with them
+                        df.at[row.Index, 'param_' + data_name] = clean_hex_data("".join([raw_rows[i + array_offset + 1] for i in range(num_rows)])[:-cut_null], data_type) 
+                        # making used rows empty
+                        for row_index in range(array_offset, array_offset + num_rows + 1):
+                            raw_rows[row_index] = None
                     else:
-                        array_offset = int(hex_to_float(raw_row)/32)  # offset of the first element in the array 
-                        array_length = int(clean_hex_data(raw_rows[array_offset], "int"))
                         # iterating through rows of elements and creating a list with them
                         df.at[row.Index, 'param_' + data_name] = [clean_hex_data(raw_rows[i + array_offset + 1],
                                                                   data_type.rstrip("[]")) for i in range(array_length)]
                         # making used rows empty
                         for row_index in range(array_offset, array_offset + array_length + 1):
                             raw_rows[row_index] = None
+
+                # static array
+                elif "[" in data_type:
+                    array_size = data_type[data_type.index("[") + 1:-1]
+                    # iterating through rows of elements and creating a list with them
+                    df.at[row.Index, 'param_' + data_name] = [clean_hex_data(raw_rows[d + i], data_type.rstrip(
+                                                              f"[{array_size}]")) for i in range(int(array_size))]
+                    d += int(array_size) - 1  # moving iteration to a row following the array's last element
+                
+                # not an array  
                 else:
                     df.at[row.Index, 'param_' + data_name] = clean_hex_data(raw_row, data_type)
                 d += 1
@@ -839,40 +850,48 @@ def clean_event_logs_df(df, contract):
 
                 # checking for unsupported type
                 stat1 = data_type.count("[") == 2
-                stat2 = data_type == "bytes"
-                stat3 = "string" in data_type
-                if stat1 or stat2 or stat3:
+                stat2 = "string[" in data_type
+                if stat1 or stat2:
                     warnings.warn(f"{data_type} is not yet supported")
                     df.at[row.Index, 'data_' + data_name] = raw_row
                     d += 1
                     continue
 
-                # checking for an array type
-                if "[" in data_type:
-                    array_size = data_type[data_type.index("[") + 1:-1]
+                # dynamic array (string, bytes included)
+                if "[]" in data_type or data_type == "string" or data_type == "bytes":
+                    array_offset = int(hex_to_float(raw_row)/32)  # offset of the first element in the array 
+                    array_length = int(clean_hex_data(raw_rows[array_offset], "int"))
 
-                    # static array
-                    if array_size:
-                        # iterating through rows of elements and creating a list with them
-                        df.at[row.Index, 'data_' + data_name] = [clean_hex_data(raw_rows[d + i], data_type.rstrip(
-                                                                  f"[{array_size}]")) for i in range(int(array_size))]
-                        d += int(array_size) - 1  # moving iteration to a row following the array's last element
-
-                    # dynamic array
+                    if data_type == "string" or data_type == "bytes":
+                        num_rows = int(ceil(array_length/32))  # should this just be array length?
+                        cut_null = (32 - array_length % 32)*2
+                        # iterating through rows of elements and creating a string with them
+                        df.at[row.Index, 'data_' + data_name] = clean_hex_data("".join([raw_rows[i + array_offset + 1] for i in range(num_rows)])[:-cut_null], data_type) 
+                        # making used rows empty
+                        for row_index in range(array_offset, array_offset + num_rows + 1):
+                            raw_rows[row_index] = None
                     else:
-                        array_offset = int(hex_to_float(raw_row)/32)  # offset of the first element in the array 
-                        array_length = int(clean_hex_data(raw_rows[array_offset], "int"))
                         # iterating through rows of elements and creating a list with them
                         df.at[row.Index, 'data_' + data_name] = [clean_hex_data(raw_rows[i + array_offset + 1],
                                                                   data_type.rstrip("[]")) for i in range(array_length)]
                         # making used rows empty
                         for row_index in range(array_offset, array_offset + array_length + 1):
                             raw_rows[row_index] = None
+
+                # static array
+                elif "[" in data_type:
+                    array_size = data_type[data_type.index("[") + 1:-1]
+                    # iterating through rows of elements and creating a list with them
+                    df.at[row.Index, 'data_' + data_name] = [clean_hex_data(raw_rows[d + i], data_type.rstrip(
+                                                              f"[{array_size}]")) for i in range(int(array_size))]
+                    d += int(array_size) - 1  # moving iteration to a row following the array's last element
+                
+                # not an array
                 else:
                     df.at[row.Index, 'data_' + data_name] = clean_hex_data(raw_row, data_type)
                     
                 d += 1
-        
+
         # drop raw data & empty columns
         df.drop(columns=["topics_0", "topics_1", "topics_2", "topics_3", "transaction_data"], inplace=True)
         df.dropna(axis='columns', how='all', inplace=True)
