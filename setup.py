@@ -15,7 +15,7 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     license="MIT",
     classifiers=[
-        "Development Status :: 4 - Alpha",
+        "Development Status :: 3 - Alpha",
         "Intended Audience :: Developers",
         "Intended Audience :: Science/Research",
         "Programming Language :: Python :: 3",
