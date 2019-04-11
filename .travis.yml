@@ -12,6 +12,7 @@ before_install:
     -in gcloud_credentials.json.enc -out gcloud_credentials.json -d
 install:
   - python setup.py develop
-script: pytest
+script: 
+  - coverage run tests/*
 after_success:
   - codecov
