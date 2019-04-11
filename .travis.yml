@@ -12,6 +12,7 @@ before_install:
     -in gcloud_credentials.json.enc -out gcloud_credentials.json -d
 install:
   - python setup.py develop
+  - pip install --user codecov
 script: 
   - pytest tests/ --cov=codecov
 after_success:
