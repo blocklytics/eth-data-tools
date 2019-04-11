@@ -12,7 +12,9 @@ before_install:
     -in gcloud_credentials.json.enc -out gcloud_credentials.json -d
 install:
   - python setup.py develop
+  - pip install codecov
+  - pip install pytest-cov 
 script: 
-  - pytest --cov-report=xml --cov=ethdata tests/
+  - pytest --cov-report=xml --cov=ethdata/ tests/
 after_success:
   - codecov
