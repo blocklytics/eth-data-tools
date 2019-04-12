@@ -1,6 +1,7 @@
 # eth-data-tools
-[![PyPI version](https://badge.fury.io/py/eth-data-tools.svg)](https://badge.fury.io/py/eth-data-tools)
 [![Build Status](https://travis-ci.org/blocklytics/eth-data-tools.svg?branch=master)](https://travis-ci.org/blocklytics/eth-data-tools)
+[![codecov](https://codecov.io/gh/blocklytics/eth-data-tools/branch/master/graph/badge.svg)](https://codecov.io/gh/blocklytics/eth-data-tools)
+[![PyPI version](https://badge.fury.io/py/eth-data-tools.svg)](https://badge.fury.io/py/eth-data-tools)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 Offers developers and analysts a simple way to extract and analyse historical Ethereum data using free, public APIs and services.
