@@ -1,4 +1,4 @@
-# eth-data-tools
+# Ethdata
 [![Build Status](https://travis-ci.org/blocklytics/eth-data-tools.svg?branch=master)](https://travis-ci.org/blocklytics/eth-data-tools)
 [![codecov](https://codecov.io/gh/blocklytics/eth-data-tools/branch/master/graph/badge.svg)](https://codecov.io/gh/blocklytics/eth-data-tools)
 [![PyPI version](https://badge.fury.io/py/eth-data-tools.svg)](https://badge.fury.io/py/eth-data-tools)
@@ -6,9 +6,18 @@
 
 Offers developers and analysts a simple way to extract and analyse historical Ethereum data using free, public APIs and services.
 
- * Pull Ethereum data without waiting to sync a node
- * Data is automatically converted (as much as possible)
- * Start analysing data right away using Pandas or Excel
+ * Access historical Ethereum data without waiting to sync a node
+ * Pull on-chain data from BigQuery instead of querying a node
+ * View data in human-readable format instead of hex blobs
+ * Start analyzing data right away in Pandas, or export to Excel/CSV
+
+# Installation
+
+```
+pip install eth-data-tools
+```
+
+There are additional setup steps required. Please refer to the package documentation.
 
 # Documentation
 
