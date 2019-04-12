@@ -731,9 +731,9 @@ def clean_transaction_receipts_df(df, contract):
 
                     if data_type == "string" or data_type == "bytes":
                         num_rows = int(ceil(array_length/32))
-                        cut_null = (32 - array_length % 32)*2
+                        cut_null = None if (array_length % 32) == 0 else (32 - array_length % 32)*2*-1
                         # iterating through rows of elements and creating a string with them
-                        df.at[row.Index, 'param_' + data_name] = clean_hex_data("".join([raw_rows[i + array_offset + 1] for i in range(num_rows)])[:-cut_null], data_type) 
+                        df.at[row.Index, 'param_' + data_name] = clean_hex_data("".join([raw_rows[i + array_offset + 1] for i in range(num_rows)])[:cut_null], data_type) 
                         # making used rows empty
                         for row_index in range(array_offset, array_offset + num_rows + 1):
                             raw_rows[row_index] = None
@@ -863,10 +863,10 @@ def clean_event_logs_df(df, contract):
                     array_length = int(clean_hex_data(raw_rows[array_offset], "int"))
 
                     if data_type == "string" or data_type == "bytes":
-                        num_rows = int(ceil(array_length/32))  # should this just be array length?
-                        cut_null = (32 - array_length % 32)*2
+                        num_rows = int(ceil(array_length/32))
+                        cut_null = None if (array_length % 32) == 0 else (32 - array_length % 32)*2*-1
                         # iterating through rows of elements and creating a string with them
-                        df.at[row.Index, 'data_' + data_name] = clean_hex_data("".join([raw_rows[i + array_offset + 1] for i in range(num_rows)])[:-cut_null], data_type) 
+                        df.at[row.Index, 'data_' + data_name] = clean_hex_data("".join([raw_rows[i + array_offset + 1] for i in range(num_rows)])[:cut_null], data_type) 
                         # making used rows empty
                         for row_index in range(array_offset, array_offset + num_rows + 1):
                             raw_rows[row_index] = None
