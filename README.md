@@ -21,7 +21,7 @@ There are additional setup steps required. Please refer to the package documenta
 
 # Documentation
 
-https://docs.blocklytics.org/eth-data-tools/introduction
+https://docs.blocklytics.org/ethdata/introduction
 
 # GitHub
 
