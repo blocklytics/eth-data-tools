@@ -10,14 +10,14 @@ import pandas as pd
 class TestArraysTransactionReceipts:
     """Test cases:
         1. Decoding an array from Bancor smart contract
-        2. Decoding a custom ABI and transaction for string and bytes type 
+        2. Decoding a string from Augar smart contract
+        3. Decoding a custom ABI and transaction for string and bytes type 
            (based on Augar smart contract)
-        3. Decoding a custom ABI and transaction for static arrays
-        4. Decoding a custom ABI and transaction for dynamic arrays
-        5. Decoding a custom ABI and transaction for 2D arrays and types bytes and string[]
+        4. Decoding a custom ABI and transaction for static arrays
+        5. Decoding a custom ABI and transaction for dynamic arrays
     """
 
-    def test_static_array_in_bancor(self):
+    def test_dynamic_array_in_bancor(self):
         my_contract = ethdata.Contract("0x6690819cb98c1211a8e38790d6cd48316ed518db")
         my_contract.query_range = {"start": "2019-03-29", "end": "2019-03-29"}
         df = my_contract.transaction_receipts
@@ -43,17 +43,13 @@ class TestArraysTransactionReceipts:
         for key in returned_data:
             assert returned_data[key] == expected_data[key]
 
-    def test_static_array_in_augur(self):
+    def test_string_handling_for_transaction_receipts(self):
         my_contract = ethdata.Contract("0xe991247b78f937d7b69cfc00f1a487a293557677")
         my_contract.query_range = {"start": "2019-03-19", "end": "2019-03-19"}
         my_contract.abi = [{"constant":False,"inputs":[{"name":"_amount","type":"uint256"}],"name":"incrementOpenInterestFromMarket","outputs":[{"name":"","type":"bool"}],"payable":False,"stateMutability":"nonpayable","type":"function"},{"constant":False,"inputs":[],"name":"getOrCreateNextFeeWindow","outputs":[{"name":"","type":"address"}],"payable":False,"stateMutability":"nonpayable","type":"function"},{"constant":False,"inputs":[{"name":"_amount","type":"uint256"}],"name":"decrementOpenInterestFromMarket","outputs":[{"name":"","type":"bool"}],"payable":False,"stateMutability":"nonpayable","type":"function"},{"constant":True,"inputs":[],"name":"getRepMarketCapInAttoeth","outputs":[{"name":"","type":"uint256"}],"payable":False,"stateMutability":"view","type":"function"},{"constant":False,"inputs":[],"name":"getOrCreatePreviousFeeWindow","outputs":[{"name":"","type":"address"}],"payable":False,"stateMutability":"nonpayable","type":"function"},{"constant":True,"inputs":[{"name":"_shadyFeeToken","type":"address"}],"name":"isContainerForFeeToken","outputs":[{"name":"","type":"bool"}],"payable":False,"stateMutability":"view","type":"function"},{"constant":True,"inputs":[],"name":"getController","outputs":[{"name":"","type":"address"}],"payable":False,"stateMutability":"view","type":"function"},{"constant":True,"inputs":[],"name":"getDisputeRoundDurationInSeconds","outputs":[{"name":"","type":"uint256"}],"payable":False,"stateMutability":"view","type":"function"},{"constant":True,"inputs":[{"name":"_feeWindowId","type":"uint256"}],"name":"getFeeWindow","outputs":[{"name":"","type":"address"}],"payable":False,"stateMutability":"view","type":"function"},{"constant":False,"inputs":[],"name":"fork","outputs":[{"name":"","type":"bool"}],"payable":False,"stateMutability":"nonpayable","type":"function"},{"constant":True,"inputs":[],"name":"getTargetRepMarketCapInAttoeth","outputs":[{"name":"","type":"uint256"}],"payable":False,"stateMutability":"view","type":"function"},{"constant":False,"inputs":[],"name":"getOrCreatePreviousPreviousFeeWindow","outputs":[{"name":"","type":"address"}],"payable":False,"stateMutability":"nonpayable","type":"function"},{"constant":True,"inputs":[{"name":"_shadyShareToken","type":"address"}],"name":"isContainerForShareToken","outputs":[{"name":"","type":"bool"}],"payable":False,"stateMutability":"view","type":"function"},{"constant":False,"inputs":[{"name":"_attotokens","type":"uint256"}],"name":"buyParticipationTokens","outputs":[{"name":"","type":"bool"}],"payable":False,"stateMutability":"nonpayable","type":"function"},{"constant":True,"inputs":[{"name":"_badMarkets","type":"uint256"},{"name":"_totalMarkets","type":"uint256"},{"name":"_targetDivisor","type":"uint256"},{"name":"_previousValue","type":"uint256"},{"name":"_defaultValue","type":"uint256"},{"name":"_floor","type":"uint256"}],"name":"calculateFloatingValue","outputs":[{"name":"_newValue","type":"uint256"}],"payable":False,"stateMutability":"pure","type":"function"},{"constant":True,"inputs":[],"name":"getInitialReportMinValue","outputs":[{"name":"","type":"uint256"}],"payable":False,"stateMutability":"view","type":"function"},{"constant":False,"inputs":[],"name":"getOrCreateCurrentFeeWindow","outputs":[{"name":"","type":"address"}],"payable":False,"stateMutability":"nonpayable","type":"function"},{"constant":True,"inputs":[],"name":"getOpenInterestInAttoEth","outputs":[{"name":"","type":"uint256"}],"payable":False,"stateMutability":"view","type":"function"},{"constant":True,"inputs":[],"name":"getPreviousFeeWindow","outputs":[{"name":"","type":"address"}],"payable":False,"stateMutability":"view","type":"function"},{"constant":True,"inputs":[],"name":"getWinningChildUniverse","outputs":[{"name":"","type":"address"}],"payable":False,"stateMutability":"view","type":"function"},{"constant":False,"inputs":[{"name":"_endTime","type":"uint256"},{"name":"_feePerEthInWei","type":"uint256"},{"name":"_denominationToken","type":"address"},{"name":"_designatedReporterAddress","type":"address"},{"name":"_minPrice","type":"int256"},{"name":"_maxPrice","type":"int256"},{"name":"_numTicks","type":"uint256"},{"name":"_topic","type":"bytes32"},{"name":"_description","type":"string"},{"name":"_extraInfo","type":"string"}],"name":"createScalarMarket","outputs":[{"name":"_newMarket","type":"address"}],"payable":True,"stateMutability":"payable","type":"function"},{"constant":False,"inputs":[],"name":"removeMarketFrom","outputs":[{"name":"","type":"bool"}],"payable":False,"stateMutability":"nonpayable","type":"function"},{"constant":True,"inputs":[],"name":"getForkEndTime","outputs":[{"name":"","type":"uint256"}],"payable":False,"stateMutability":"view","type":"function"},{"constant":True,"inputs":[],"name":"getCurrentFeeWindow","outputs":[{"name":"","type":"address"}],"payable":False,"stateMutability":"view","type":"function"},{"constant":True,"inputs":[],"name":"getForkReputationGoal","outputs":[{"name":"","type":"uint256"}],"payable":False,"stateMutability":"view","type":"function"},{"constant":False,"inputs":[{"name":"_reportingParticipants","type":"address[]"},{"name":"_feeWindows","type":"address[]"}],"name":"redeemStake","outputs":[{"name":"","type":"bool"}],"payable":False,"stateMutability":"nonpayable","type":"function"},{"constant":False,"inputs":[],"name":"getOrCacheReportingFeeDivisor","outputs":[{"name":"","type":"uint256"}],"payable":False,"stateMutability":"nonpayable","type":"function"},{"constant":False,"inputs":[{"name":"_controller","type":"address"}],"name":"setController","outputs":[{"name":"","type":"bool"}],"payable":False,"stateMutability":"nonpayable","type":"function"},{"constant":True,"inputs":[{"name":"_shadyChild","type":"address"}],"name":"isParentOf","outputs":[{"name":"","type":"bool"}],"payable":False,"stateMutability":"view","type":"function"},{"constant":False,"inputs":[],"name":"updateForkValues","outputs":[{"name":"","type":"bool"}],"payable":False,"stateMutability":"nonpayable","type":"function"},{"constant":True,"inputs":[{"name":"_shadyMarket","type":"address"}],"name":"isContainerForMarket","outputs":[{"name":"","type":"bool"}],"payable":False,"stateMutability":"view","type":"function"},{"constant":True,"inputs":[],"name":"getParentUniverse","outputs":[{"name":"","type":"address"}],"payable":False,"stateMutability":"view","type":"function"},{"constant":True,"inputs":[{"name":"_timestamp","type":"uint256"}],"name":"getFeeWindowByTimestamp","outputs":[{"name":"","type":"address"}],"payable":False,"stateMutability":"view","type":"function"},{"constant":False,"inputs":[],"name":"getOrCacheValidityBond","outputs":[{"name":"","type":"uint256"}],"payable":False,"stateMutability":"nonpayable","type":"function"},{"constant":False,"inputs":[],"name":"getInitialReportStakeSize","outputs":[{"name":"","type":"uint256"}],"payable":False,"stateMutability":"nonpayable","type":"function"},{"constant":False,"inputs":[{"name":"_amount","type":"uint256"}],"name":"decrementOpenInterest","outputs":[{"name":"","type":"bool"}],"payable":False,"stateMutability":"nonpayable","type":"function"},{"constant":False,"inputs":[{"name":"_timestamp","type":"uint256"}],"name":"getOrCreateFeeWindowByTimestamp","outputs":[{"name":"","type":"address"}],"payable":False,"stateMutability":"nonpayable","type":"function"},{"constant":True,"inputs":[],"name":"getReputationToken","outputs":[{"name":"","type":"address"}],"payable":False,"stateMutability":"view","type":"function"},{"constant":False,"inputs":[{"name":"_parentUniverse","type":"address"},{"name":"_parentPayoutDistributionHash","type":"bytes32"}],"name":"initialize","outputs":[{"name":"","type":"bool"}],"payable":False,"stateMutability":"nonpayable","type":"function"},{"constant":True,"inputs":[],"name":"isForking","outputs":[{"name":"","type":"bool"}],"payable":False,"stateMutability":"view","type":"function"},{"constant":True,"inputs":[],"name":"controllerLookupName","outputs":[{"name":"","type":"bytes32"}],"payable":False,"stateMutability":"view","type":"function"},{"constant":True,"inputs":[],"name":"getParentPayoutDistributionHash","outputs":[{"name":"","type":"bytes32"}],"payable":False,"stateMutability":"view","type":"function"},{"constant":True,"inputs":[{"name":"_shadyFeeWindow","type":"address"}],"name":"isContainerForFeeWindow","outputs":[{"name":"","type":"bool"}],"payable":False,"stateMutability":"view","type":"function"},{"constant":False,"inputs":[{"name":"_endTime","type":"uint256"},{"name":"_feePerEthInWei","type":"uint256"},{"name":"_denominationToken","type":"address"},{"name":"_designatedReporterAddress","type":"address"},{"name":"_topic","type":"bytes32"},{"name":"_description","type":"string"},{"name":"_extraInfo","type":"string"}],"name":"createYesNoMarket","outputs":[{"name":"_newMarket","type":"address"}],"payable":True,"stateMutability":"payable","type":"function"},{"constant":True,"inputs":[],"name":"getForkingMarket","outputs":[{"name":"","type":"address"}],"payable":False,"stateMutability":"view","type":"function"},{"constant":False,"inputs":[{"name":"_amount","type":"uint256"}],"name":"incrementOpenInterest","outputs":[{"name":"","type":"bool"}],"payable":False,"stateMutability":"nonpayable","type":"function"},{"constant":False,"inputs":[{"name":"_endTime","type":"uint256"},{"name":"_feePerEthInWei","type":"uint256"},{"name":"_denominationToken","type":"address"},{"name":"_designatedReporterAddress","type":"address"},{"name":"_outcomes","type":"bytes32[]"},{"name":"_topic","type":"bytes32"},{"name":"_description","type":"string"},{"name":"_extraInfo","type":"string"}],"name":"createCategoricalMarket","outputs":[{"name":"_newMarket","type":"address"}],"payable":True,"stateMutability":"payable","type":"function"},{"constant":True,"inputs":[{"name":"_timestamp","type":"uint256"}],"name":"getFeeWindowId","outputs":[{"name":"","type":"uint256"}],"payable":False,"stateMutability":"view","type":"function"},{"constant":True,"inputs":[],"name":"getTypeName","outputs":[{"name":"","type":"bytes32"}],"payable":False,"stateMutability":"view","type":"function"},{"constant":False,"inputs":[{"name":"_parentPayoutNumerators","type":"uint256[]"},{"name":"_parentInvalid","type":"bool"}],"name":"createChildUniverse","outputs":[{"name":"","type":"address"}],"payable":False,"stateMutability":"nonpayable","type":"function"},{"constant":False,"inputs":[{"name":"_feeWindow","type":"address"}],"name":"getOrCreateFeeWindowBefore","outputs":[{"name":"","type":"address"}],"payable":False,"stateMutability":"nonpayable","type":"function"},{"constant":False,"inputs":[],"name":"getOrCacheDesignatedReportStake","outputs":[{"name":"","type":"uint256"}],"payable":False,"stateMutability":"nonpayable","type":"function"},{"constant":False,"inputs":[],"name":"getOrCacheMarketCreationCost","outputs":[{"name":"","type":"uint256"}],"payable":False,"stateMutability":"nonpayable","type":"function"},{"constant":True,"inputs":[{"name":"_parentPayoutDistributionHash","type":"bytes32"}],"name":"getChildUniverse","outputs":[{"name":"","type":"address"}],"payable":False,"stateMutability":"view","type":"function"},{"constant":True,"inputs":[],"name":"getNextFeeWindow","outputs":[{"name":"","type":"address"}],"payable":False,"stateMutability":"view","type":"function"},{"constant":True,"inputs":[],"name":"getInitialized","outputs":[{"name":"","type":"bool"}],"payable":False,"stateMutability":"view","type":"function"},{"constant":False,"inputs":[{"name":"_parentPayoutDistributionHash","type":"bytes32"}],"name":"updateTentativeWinningChildUniverse","outputs":[{"name":"","type":"bool"}],"payable":False,"stateMutability":"nonpayable","type":"function"},{"constant":True,"inputs":[{"name":"_shadyReportingParticipant","type":"address"}],"name":"isContainerForReportingParticipant","outputs":[{"name":"","type":"bool"}],"payable":False,"stateMutability":"view","type":"function"},{"constant":True,"inputs":[],"name":"getDisputeThresholdForFork","outputs":[{"name":"","type":"uint256"}],"payable":False,"stateMutability":"view","type":"function"},{"constant":False,"inputs":[],"name":"getOrCacheDesignatedReportNoShowBond","outputs":[{"name":"","type":"uint256"}],"payable":False,"stateMutability":"nonpayable","type":"function"},{"constant":False,"inputs":[],"name":"addMarketTo","outputs":[{"name":"","type":"bool"}],"payable":False,"stateMutability":"nonpayable","type":"function"}]
 
-        df_tx = my_contract.transaction_receipts
-        assert df_tx.loc[df_tx.transaction_hash == "0xcb6b15f23808338426ae791de9e5312a2d3665a365db952425d262b9766d50f9"].iloc[0].param__description == "Who will win the 2019 NCAA mens college basketball championship?"
-
-        df_logs = my_contract.event_logs
-        assert df_logs.loc[(df_logs.transaction_hash == "0xcb6b15f23808338426ae791de9e5312a2d3665a365db952425d262b9766d50f9") & (df_logs.event_name == "MarketCreated")].iloc[0].param__description == "Who will win the 2019 NCAA mens college basketball championship?"
-
+        df = my_contract.transaction_receipts
+        assert df.loc[df.transaction_hash == "0xcb6b15f23808338426ae791de9e5312a2d3665a365db952425d262b9766d50f9"].iloc[0].param__description == "Who will win the 2019 NCAA mens college basketball championship?"
 
     def test_string_and_bytes(self):
         my_contract = ethdata.Contract("0xE991247b78F937D7B69cFC00f1A487A293557677")
@@ -109,7 +105,7 @@ class TestArraysTransactionReceipts:
                               }, index=[0])
 
         # cleaning data in appropriate format
-        returned_data = ethdata.clean_transaction_receipts_df(df, my_contract).iloc[0].to_dict()
+        returned_data = ethdata.CleanDf().clean_transaction_receipts_df(df, my_contract).iloc[0].to_dict()
         for key in list(returned_data.keys())[:6]:  # remove unnecessary keys
             returned_data.pop(key)
 
@@ -186,7 +182,7 @@ class TestArraysTransactionReceipts:
                       }, index=[0])
 
         # cleaning data in appropriate format
-        returned_data = ethdata.clean_transaction_receipts_df(df, my_contract).iloc[0].to_dict()
+        returned_data = ethdata.CleanDf().clean_transaction_receipts_df(df, my_contract).iloc[0].to_dict()
         for key in list(returned_data.keys())[:6]:  # remove unnecessary keys
             returned_data.pop(key)
 
@@ -259,7 +255,7 @@ class TestArraysTransactionReceipts:
                       }, index=[0])
 
         # cleaning data in appropriate format
-        returned_data = ethdata.clean_transaction_receipts_df(df, my_contract).iloc[0].to_dict()
+        returned_data = ethdata.CleanDf().clean_transaction_receipts_df(df, my_contract).iloc[0].to_dict()
         for key in list(returned_data.keys())[:6]:  # remove unnecessary keys
             returned_data.pop(key)
 
@@ -274,61 +270,18 @@ class TestArraysTransactionReceipts:
         for key in returned_data:
             assert returned_data[key] == expected_result[key]
 
-    def test_unsupported_array_types(self):
-        eg_unsupported_types = ['address[][]', 'int8[2][]', 'bytes32[][3]', 'bool[2][3]', 'string[2]', 'string[]']
-        my_contract = ethdata.Contract("0x6690819cb98c1211a8e38790d6cd48316ed518db")
-
-        # overriding ABI with new values
-        my_contract.abi = [{
-                            'constant': False, 
-                            'inputs': [{'name': '_jack', 'type': 'address[][]'}, {'name': '_price', 'type': 'int8[2][]'},
-                                       {'name': '_yuri', 'type': 'bytes32[][3]'}, {'name': '_soap', 'type': 'bool[2][3]'},
-                                       {'name': '_greg', 'type': 'string[2]'}, {'name': '_thomas', 'type': 'string[]'}], 
-                            'name': 'registerEtherToken', 
-                            'outputs': [], 
-                            'payable': False, 
-                            'stateMutability': 'nonpayable', 
-                            'type': 'function'
-                          }]
-
-        # test data to inject into DataFrame for testing (this data does not represent ABI's types)
-        test_data = [
-               "0000000000000000000000000000000000000000000000000000000000000040",
-               "00000000000000000000000000000000000000000000000000000000000000A0",
-               "0000000000000000000000000000000000000000000000000000000000000002",
-               "000000000000000000000000000000000000000000000000000000000000032d",
-               "0000000000000000000000004e15361fd6b4bb609fa63c81a2be19d873717870",
-               "0000000000000000000000000000000000000000000000000000000000000001"]
-
-        # create DataFrame for testing
-        df = pd.DataFrame({
-            'transaction_hash': '0x498a18373623ca84e7caf058ab13fa288d34117dcd69cf20c7dd58d75e1d033f', 
-            'block_timestamp': pd.Timestamp('2019-02-20 12:00:00+0000', tz='UTC'), 
-            'from_address': '0x59550cdee3fe8685fdb76281f5bbd9a65dc50c51', 
-            'to_address': '0x6690819cb98c1211a8e38790d6cd48316ed518db', 
-            'value': 0, 
-            'function_signature': list(my_contract.functions.keys())[0],
-            'function_data': "".join(test_data)
-                      }, index=[0])
-
-        with pytest.warns(UserWarning) as record:
-            ethdata.clean_transaction_receipts_df(df, my_contract)
-        record = [warning for warning in record if warning.category == UserWarning]
-        for n, warning in enumerate(record):
-            assert str(warning.message) == f"{eg_unsupported_types[n]} is not yet supported"
-
 
 class TestArraysEventLogs:
     """Test cases:
         1. Decoding a string from Augur smart contract
-        2. Decoding a custom ABI and an event log for string and bytes type
+        2. Decoding a string from Augar smart contract
+        3. Decoding a custom ABI and an event log for string and bytes type
            (based on Augur smart contract)
-        3. Decoding a custom ABI and an event log for static arrays - data passed in event data
-        4. Decoding a custom ABI and an event log for static arrays - data passed in event topics
-        5. Decoding a custom ABI and an event log for dynamic arrays - data passed in event data
-        6. Decoding a custom ABI and an event log for dynamic arrays - data passed in event topics
-        7. Decoding a custom ABI and an event log to test for warning with unsupported types - data passed in event data
-        8. Decoding a custom ABI and an event log to test for warning with unsupported types - data passed in event topics
+        4. Decoding a custom ABI and an event log for static arrays - data passed in event data
+        5. Decoding a custom ABI and an event log for static arrays - data passed in event topics
+        6. Decoding a custom ABI and an event log for dynamic - data passed in event data
+        7. Decoding a custom ABI and an event log for dynamic arrays - data passed in event topics
+        8. Decoding a custom ABI and an event log for 2D arrays - data passed in event topics
     """
 
 
@@ -336,13 +289,21 @@ class TestArraysEventLogs:
         my_contract = ethdata.Contract("0x75228dce4d82566d93068a8d5d49435216551599")
         my_contract.query_range = {"start": "2019-04-01", "end": "2019-04-01"}
         df_test = my_contract.event_logs
-        returned_data = df_test.iloc[55]
+        returned_data = df_test.iloc[54]
 
         assert returned_data.data_description == "How many listings will DeFi Pulse have by June 28th, 2019 ? "
         assert returned_data.data_extraInfo == ('{"longDescription":"DeFi Pulse tracks open finance applications '
                                                 'and protocols built on ethereum.\\n\\nThis market involves the '
                                                 'number of listings which can be found in the first column. '
                                                 '","tags":[],"resolutionSource":"https://defipulse.com/"}')
+
+    def test_string_handling_for_event_logs(self):
+        my_contract = ethdata.Contract("0x75228dce4d82566d93068a8d5d49435216551599")
+        my_contract.query_range = {"start": "2019-03-19", "end": "2019-03-19"}
+
+        returned_data = my_contract.event_logs
+        returned_data = returned_data.loc[(returned_data.transaction_hash == "0xcb6b15f23808338426ae791de9e5312a2d3665a365db952425d262b9766d50f9") & (returned_data.event_name == "MarketCreated")].iloc[0].data_description
+        assert returned_data == "Who will win the 2019 NCAA mens college basketball championship?"
 
     def test_bytes_and_string(self):
         my_contract = ethdata.Contract("0x75228dce4d82566d93068a8d5d49435216551599")
@@ -403,7 +364,7 @@ class TestArraysEventLogs:
             }, index=[0])
 
         # cleaning data in appropriate format
-        returned_data = ethdata.clean_event_logs_df(df, my_contract).to_dict("r")[0]
+        returned_data = returned_data = ethdata.CleanDf().clean_event_logs_df(df, my_contract).to_dict("r")[0]
         for key in ("transaction_hash", "block_timestamp", "event_name", "address"):
             returned_data.pop(key)
 
@@ -470,7 +431,7 @@ class TestArraysEventLogs:
             'transaction_data': test_data
             }, index=[0])
 
-        returned_data = ethdata.clean_event_logs_df(df, my_contract).to_dict("r")[0]
+        returned_data = ethdata.CleanDf().clean_event_logs_df(df, my_contract).to_dict("r")[0]
         for key in ("transaction_hash", "block_timestamp", "event_name", "address"):
             returned_data.pop(key)
 
@@ -521,7 +482,7 @@ class TestArraysEventLogs:
             }, index=[0])
 
         with pytest.warns(UserWarning) as record:
-            ethdata.clean_event_logs_df(df, my_contract)
+            ethdata.CleanDf().clean_event_logs_df(df, my_contract)
         record = [warning for warning in record if warning.category == UserWarning]
         for n, warning in enumerate(record):
             assert str(warning.message) == f"{eg_array_types[n]} is not yet supported passed as topic"
@@ -572,7 +533,7 @@ class TestArraysEventLogs:
             'transaction_data': test_data
             }, index=[0])
 
-        returned_data = ethdata.clean_event_logs_df(df, my_contract).to_dict("r")[0]
+        returned_data = returned_data = ethdata.CleanDf().clean_event_logs_df(df, my_contract).to_dict("r")[0]
         for key in ("transaction_hash", "block_timestamp", "event_name", "address"):
             returned_data.pop(key)
 
@@ -617,12 +578,12 @@ class TestArraysEventLogs:
             }, index=[0])
 
         with pytest.warns(UserWarning) as record:
-            ethdata.clean_event_logs_df(df, my_contract)
+            ethdata.CleanDf().clean_event_logs_df(df, my_contract)
         record = [warning for warning in record if warning.category == UserWarning]
         for n, warning in enumerate(record):
             assert str(warning.message) == f"{eg_array_types[n]} is not yet supported passed as topic"
 
-    def test_unsupported_array_types_with_topics(self):
+    def test_2D_array_types_with_topics(self):
         eg_unsupported_types = ['address[][]', 'int8[2][]', 'bytes32[][3]', 'bool[2][3]', 'string[2]', 'string[]']
         my_contract = ethdata.Contract("0x6690819cb98c1211a8e38790d6cd48316ed518db")
 
@@ -657,53 +618,310 @@ class TestArraysEventLogs:
             }, index=[0])
 
         with pytest.warns(UserWarning) as record:
-            ethdata.clean_event_logs_df(df, my_contract)
+            ethdata.CleanDf().clean_event_logs_df(df, my_contract)
         record = [warning for warning in record if warning.category == UserWarning]
         for n, warning in enumerate(record):
-            assert str(warning.message) == f"{eg_unsupported_types[n]} is not yet supported"
+            assert str(warning.message) == f"{eg_unsupported_types[n]} is not yet supported passed as topic"
 
-    def test_unsupported_array_types_with_data(self):
-        eg_unsupported_types = ['address[][]', 'int8[2][]', 'bytes32[][3]', 'bool[2][3]', 'string[2]', 'string[]']
-        my_contract = ethdata.Contract("0x6690819cb98c1211a8e38790d6cd48316ed518db")
 
+class TestTwoDimensionalArrays:
+    """Test cases:
+            1. Decoding a custom ABI and transaction for dynamic-dynamic array type
+            2. Decoding a custom ABI and transaction for dynamic-string array type
+            3. Decoding a custom ABI and transaction for static-bytes array type
+            4. Decoding a custom ABI and transaction for static-static array type
+            5. Decoding a custom ABI and transaction for dynamic-static type
+            6. Decoding a custom ABI and transaction for static-dynamic type
+    """
+
+
+    def test_dynamic_dynamic_array(self):
+        my_contract = ethdata.Contract("0xE991247b78F937D7B69cFC00f1A487A293557677")
+        my_contract.query_range = {"start": "2019-04-01", "end": "2019-04-01"}
         # overriding ABI with new values
         my_contract.abi = [{
-                            'anonymous': False, 
-                            'inputs': [    
-                                        {'indexed': False, 'name': 'token', 'type': 'address[][]'}, 
-                                        {'indexed': False, 'name': 'user', 'type': 'int8[2][]'},
-                                        {'indexed': False, 'name': 'amount', 'type': 'bytes32[][3]'}, 
-                                        {'indexed': False, 'name': 'mount', 'type': 'bool[2][3]'}, 
-                                        {'indexed': False, 'name': 'roken', 'type': 'string[2]'},
-                                        {'indexed': False, 'name': 'taunt', 'type': 'string[]'}
-                                      ], 
-                            'name': 'Withdraw', 'type': 'event'}]
+                        "constant":False,
+                        "inputs":[{"name":"_endTime","type":"int8[][]"}],
+                        "name":"createScalarMarket",
+                        "outputs":[{"name":"_newMarket","type":"address"}],
+                        "payable":True,
+                        "stateMutability":"payable",
+                        "type":"function"}]
 
-        # test data to inject into DataFrame for testing (this data does not represent ABI's types)
-        test_data = "".join([
-               "0000000000000000000000000000000000000000000000000000000000000040",
-               "00000000000000000000000000000000000000000000000000000000000000A0",
-               "0000000000000000000000000000000000000000000000000000000000000002",
-               "000000000000000000000000000000000000000000000000000000000000032d",
-               "0000000000000000000000004e15361fd6b4bb609fa63c81a2be19d873717870",
-               "0000000000000000000000000000000000000000000000000000000000000002",
-               "000000000000000000000000000000000000000000000000000000000000001c",
-               "0000000000000000000000000000000000000000000000000000000000000001"])
+        # test data to inject into DataFrame for testing
+        test_data = [
+                     '0000000000000000000000000000000000000000000000000000000000000020',  # offset for array0
+                     '0000000000000000000000000000000000000000000000000000000000000002',  # len(array0)
+                     '0000000000000000000000000000000000000000000000000000000000000040',  # offset for array1
+                     '00000000000000000000000000000000000000000000000000000000000000c0',  # offset for array2
+                     '0000000000000000000000000000000000000000000000000000000000000003',  # len(array1)
+                     '000000000000000000000000000000000000000000000000000000000000000a',
+                     '000000000000000000000000000000000000000000000000000000000000000b',
+                     '000000000000000000000000000000000000000000000000000000000000000c',
+                     '0000000000000000000000000000000000000000000000000000000000000001',  # len(array2)
+                     '000000000000000000000000000000000000000000000000000000000000000d']
 
         # create DataFrame for testing
         df = pd.DataFrame({
-            'transaction_hash': '0x762a85b8f67862f3a9558c586f12bc668774cc0789bf66920a1b399684ed4ae9', 
-            'block_timestamp': pd.Timestamp('2018-11-15 00:01:59'), 
-            'address': '0x2a0c0dbecc7e4d658f48e01e3fa353f44050c208', 
-            'topics_0': list(my_contract.events.keys())[0], 
-            'topics_1': None, 
-            'topics_2': None, 
-            'topics_3': None, 
-            'transaction_data': test_data
-            }, index=[0])
+                    'transaction_hash': '0x498a18373623ca84e7caf058ab13fa288d34117dcd69cf20c7dd58d75e1d033f', 
+                    'block_timestamp': pd.Timestamp('2019-02-20 12:00:00+0000', tz='UTC'), 
+                    'from_address': '0x59550cdee3fe8685fdb76281f5bbd9a65dc50c51', 
+                    'to_address': '0x6690819cb98c1211a8e38790d6cd48316ed518db', 
+                    'value': 0.042943815049849295, 
+                    'function_signature': list(my_contract.functions.keys())[0],
+                    'function_data': "".join(test_data)
+                              }, index=[0])
 
-        with pytest.warns(UserWarning) as record:
-            ethdata.clean_event_logs_df(df, my_contract)
-        record = [warning for warning in record if warning.category == UserWarning]
-        for n, warning in enumerate(record):
-            assert str(warning.message) == f"{eg_unsupported_types[n]} is not yet supported"
+        # cleaning data in appropriate format
+        returned_data = ethdata.CleanDf().clean_transaction_receipts_df(df, my_contract).iloc[0].to_dict()
+        for key in list(returned_data.keys())[:6]:  # remove unnecessary keys
+            returned_data.pop(key)
+
+        expected_data = {'param__endTime': [[10.0, 11.0, 12.0], [13.0]]}
+
+        for key in returned_data:
+            assert returned_data[key] == expected_data[key]
+
+    def test_string_dynamic_array(self):
+        my_contract = ethdata.Contract("0xE991247b78F937D7B69cFC00f1A487A293557677")
+        my_contract.query_range = {"start": "2019-04-01", "end": "2019-04-01"}
+        # overriding ABI with new values
+        my_contract.abi = [{
+                        "constant":False,
+                        "inputs":[{"name":"_endTime", "type":"uint[][]"},
+                                  {"name":"_makarov", "type":"string[]"}],
+                        "name":"createScalarMarket",
+                        "outputs":[{"name":"_newMarket","type":"address"}],
+                        "payable":True,
+                        "stateMutability":"payable",
+                        "type":"function"}]
+
+        # test data to inject into DataFrame for testing
+        test_data = [
+                    '0000000000000000000000000000000000000000000000000000000000000040',  # offset of [[1, 2], [3]]
+                    '0000000000000000000000000000000000000000000000000000000000000140',  # offset of ["one", "two", "three"]
+                    '0000000000000000000000000000000000000000000000000000000000000002',  # count for [[1, 2], [3]]
+                    '0000000000000000000000000000000000000000000000000000000000000040',  # offset of [1, 2]
+                    '00000000000000000000000000000000000000000000000000000000000000a0',  # offset of [3]
+                    '0000000000000000000000000000000000000000000000000000000000000002',  # count for [1, 2]
+                    '0000000000000000000000000000000000000000000000000000000000000001',  # encoding of 1
+                    '0000000000000000000000000000000000000000000000000000000000000002',  # encoding of 2
+                    '0000000000000000000000000000000000000000000000000000000000000001',  # count for [3]
+                    '0000000000000000000000000000000000000000000000000000000000000003',  # encoding of 3
+                    '0000000000000000000000000000000000000000000000000000000000000003',  # count for ["one", "two", "three"]
+                    '0000000000000000000000000000000000000000000000000000000000000060',  # offset for "one"
+                    '00000000000000000000000000000000000000000000000000000000000000a0',  # offset for "two"
+                    '00000000000000000000000000000000000000000000000000000000000000e0',  # offset for "three"
+                    '0000000000000000000000000000000000000000000000000000000000000003',  # count for "one"
+                    '6f6e650000000000000000000000000000000000000000000000000000000000',  # encoding of "one"
+                    '0000000000000000000000000000000000000000000000000000000000000003',  # count for "two"
+                    '74776f0000000000000000000000000000000000000000000000000000000000',  # encoding of "two"
+                    '0000000000000000000000000000000000000000000000000000000000000005',  # count for "three"
+                    '7468726565000000000000000000000000000000000000000000000000000000']  # encoding of "three"
+
+        # create DataFrame for testing
+        df = pd.DataFrame({
+                    'transaction_hash': '0x498a18373623ca84e7caf058ab13fa288d34117dcd69cf20c7dd58d75e1d033f', 
+                    'block_timestamp': pd.Timestamp('2019-02-20 12:00:00+0000', tz='UTC'), 
+                    'from_address': '0x59550cdee3fe8685fdb76281f5bbd9a65dc50c51', 
+                    'to_address': '0x6690819cb98c1211a8e38790d6cd48316ed518db', 
+                    'value': 0.042943815049849295, 
+                    'function_signature': list(my_contract.functions.keys())[0],
+                    'function_data': "".join(test_data)
+                              }, index=[0])
+
+        # cleaning data in appropriate format
+        returned_data = ethdata.CleanDf().clean_transaction_receipts_df(df, my_contract).iloc[0].to_dict()
+        for key in list(returned_data.keys())[:6]:  # remove unnecessary keys
+            returned_data.pop(key)
+
+        expected_data = {'param__endTime': [[1.0, 2.0], [3.0]], 'param__makarov': ['one', 'two', 'three']}
+
+        for key in returned_data:
+            assert returned_data[key] == expected_data[key]
+
+    def test_bytes_static_array(self):
+        my_contract = ethdata.Contract("0xE991247b78F937D7B69cFC00f1A487A293557677")
+        my_contract.query_range = {"start": "2019-04-01", "end": "2019-04-01"}
+        # overriding ABI with new values
+        my_contract.abi = [{
+                        "constant":False,
+                        "inputs":[{"name":"_endTime", "type":"bytes[2]"}],
+                        "name":"createScalarMarket",
+                        "outputs":[{"name":"_newMarket","type":"address"}],
+                        "payable":True,
+                        "stateMutability":"payable",
+                        "type":"function"}]
+
+        # test data to inject into DataFrame for testing
+        test_data = ['0000000000000000000000000000000000000000000000000000000000000040',
+                    '00000000000000000000000000000000000000000000000000000000000000a0',
+                    "000000000000000000000000000000000000000000000000000000000000003c",
+                    "486f77206d616e79206c697374696e67732077696c6c20446546692050756c73",
+                    "652068617665206279204a756e6520323874682c2032303139203f2000000000",
+                    "000000000000000000000000000000000000000000000000000000000000000d",
+                    "48656c6c6f2c20776f726c642100000000000000000000000000000000000000"]
+
+        # create DataFrame for testing
+        df = pd.DataFrame({
+                    'transaction_hash': '0x498a18373623ca84e7caf058ab13fa288d34117dcd69cf20c7dd58d75e1d033f', 
+                    'block_timestamp': pd.Timestamp('2019-02-20 12:00:00+0000', tz='UTC'), 
+                    'from_address': '0x59550cdee3fe8685fdb76281f5bbd9a65dc50c51', 
+                    'to_address': '0x6690819cb98c1211a8e38790d6cd48316ed518db', 
+                    'value': 0.042943815049849295, 
+                    'function_signature': list(my_contract.functions.keys())[0],
+                    'function_data': "".join(test_data)
+                              }, index=[0])
+
+        # cleaning data in appropriate format
+        returned_data = ethdata.CleanDf().clean_transaction_receipts_df(df, my_contract).iloc[0].to_dict()
+        for key in list(returned_data.keys())[:6]:  # remove unnecessary keys
+            returned_data.pop(key)
+
+        expected_data = {'param__endTime': [("486f77206d616e79206c697374696e67732077696c6c204465"
+                                             "46692050756c73652068617665206279204a756e6520323874"
+                                             "682c2032303139203f20"),
+                                            ('48656c6c6f2c20776f726c6421')]}
+
+        for key in returned_data:
+            assert returned_data[key] == expected_data[key]
+
+    def test_static_static_array(self):
+        my_contract = ethdata.Contract("0xE991247b78F937D7B69cFC00f1A487A293557677")
+        my_contract.query_range = {"start": "2019-04-01", "end": "2019-04-01"}
+        # overriding ABI with new values
+        my_contract.abi = [{
+                        "constant":False,
+                        "inputs":[{"name":"_endTime", "type":"int[2][3]"}],
+                        "name":"createScalarMarket",
+                        "outputs":[{"name":"_newMarket","type":"address"}],
+                        "payable":True,
+                        "stateMutability":"payable",
+                        "type":"function"}]
+
+        # test data to inject into DataFrame for testing
+        test_data = [
+                    '0000000000000000000000000000000000000000000000000000000000000001',
+                    '0000000000000000000000000000000000000000000000000000000000000004',
+                    '0000000000000000000000000000000000000000000000000000000000000002',
+                    '0000000000000000000000000000000000000000000000000000000000000003',
+                    '0000000000000000000000000000000000000000000000000000000000000009',
+                    '0000000000000000000000000000000000000000000000000000000000000005']
+
+        # create DataFrame for testing
+        df = pd.DataFrame({
+                    'transaction_hash': '0x498a18373623ca84e7caf058ab13fa288d34117dcd69cf20c7dd58d75e1d033f', 
+                    'block_timestamp': pd.Timestamp('2019-02-20 12:00:00+0000', tz='UTC'), 
+                    'from_address': '0x59550cdee3fe8685fdb76281f5bbd9a65dc50c51', 
+                    'to_address': '0x6690819cb98c1211a8e38790d6cd48316ed518db', 
+                    'value': 0.042943815049849295, 
+                    'function_signature': list(my_contract.functions.keys())[0],
+                    'function_data': "".join(test_data)
+                              }, index=[0])
+
+        # cleaning data in appropriate format
+        returned_data = ethdata.CleanDf().clean_transaction_receipts_df(df, my_contract).iloc[0].to_dict()
+        for key in list(returned_data.keys())[:6]:  # remove unnecessary keys
+            returned_data.pop(key)
+
+        expected_data = {'param__endTime': [[1.0, 4.0], [2.0, 3.0], [9.0, 5.0]]}
+
+        for key in returned_data:
+            assert returned_data[key] == expected_data[key]
+
+    def test_dynamic_static_array(self):
+        my_contract = ethdata.Contract("0xE991247b78F937D7B69cFC00f1A487A293557677")
+        my_contract.query_range = {"start": "2019-04-01", "end": "2019-04-01"}
+        # overriding ABI with new values
+        my_contract.abi = [{
+                        "constant":False,
+                        "inputs":[{"name":"_endTime", "type":"int[3][]"}],
+                        "name":"createScalarMarket",
+                        "outputs":[{"name":"_newMarket","type":"address"}],
+                        "payable":True,
+                        "stateMutability":"payable",
+                        "type":"function"}]
+
+        # test data to inject into DataFrame for testing
+        test_data = [
+                    '0000000000000000000000000000000000000000000000000000000000000020',
+                    '0000000000000000000000000000000000000000000000000000000000000003',
+                    '0000000000000000000000000000000000000000000000000000000000000002',
+                    '0000000000000000000000000000000000000000000000000000000000000003',
+                    '0000000000000000000000000000000000000000000000000000000000000004',
+                    '0000000000000000000000000000000000000000000000000000000000000001',
+                    '0000000000000000000000000000000000000000000000000000000000000008',
+                    '0000000000000000000000000000000000000000000000000000000000000002',
+                    '0000000000000000000000000000000000000000000000000000000000000004',
+                    '0000000000000000000000000000000000000000000000000000000000000001',
+                    '0000000000000000000000000000000000000000000000000000000000000000']
+
+        # create DataFrame for testing
+        df = pd.DataFrame({
+                    'transaction_hash': '0x498a18373623ca84e7caf058ab13fa288d34117dcd69cf20c7dd58d75e1d033f', 
+                    'block_timestamp': pd.Timestamp('2019-02-20 12:00:00+0000', tz='UTC'), 
+                    'from_address': '0x59550cdee3fe8685fdb76281f5bbd9a65dc50c51', 
+                    'to_address': '0x6690819cb98c1211a8e38790d6cd48316ed518db', 
+                    'value': 0.042943815049849295, 
+                    'function_signature': list(my_contract.functions.keys())[0],
+                    'function_data': "".join(test_data)
+                              }, index=[0])
+
+        # cleaning data in appropriate format
+        returned_data = ethdata.CleanDf().clean_transaction_receipts_df(df, my_contract).iloc[0].to_dict()
+        for key in list(returned_data.keys())[:6]:  # remove unnecessary keys
+            returned_data.pop(key)
+
+        expected_data = {'param__endTime': [[2.0, 3.0, 4.0], [1.0, 8.0, 2.0], [4.0, 1.0, 0.0]]}
+
+        for key in returned_data:
+            assert returned_data[key] == expected_data[key]
+
+    def test_static_dynamic_array(self):
+        my_contract = ethdata.Contract("0xE991247b78F937D7B69cFC00f1A487A293557677")
+        my_contract.query_range = {"start": "2019-04-01", "end": "2019-04-01"}
+        # overriding ABI with new values
+        my_contract.abi = [{
+                        "constant":False,
+                        "inputs":[{"name":"_endTime", "type":"address[][2]"}],
+                        "name":"createScalarMarket",
+                        "outputs":[{"name":"_newMarket","type":"address"}],
+                        "payable":True,
+                        "stateMutability":"payable",
+                        "type":"function"}]
+
+        # test data to inject into DataFrame for testing
+        test_data = [
+                    '0000000000000000000000000000000000000000000000000000000000000040',
+                    '00000000000000000000000000000000000000000000000000000000000000c0',
+                    '0000000000000000000000000000000000000000000000000000000000000003',
+                    '000000000000000000000000d5524179cb7ae012f5b642c1d6d700bbaa76b96b',
+                    '000000000000000000000000d953e24b1433fbcce94b5f5b282aa67b7e6d59fb',
+                    "0000000000000000000000004e15361fd6b4bb609fa63c81a2be19d873717870",
+                    '0000000000000000000000000000000000000000000000000000000000000001',
+                    "0000000000000000000000004E484D658700BA6642d075b1Ad1303A049fa23E8"]
+
+        # create DataFrame for testing
+        df = pd.DataFrame({
+                    'transaction_hash': '0x498a18373623ca84e7caf058ab13fa288d34117dcd69cf20c7dd58d75e1d033f', 
+                    'block_timestamp': pd.Timestamp('2019-02-20 12:00:00+0000', tz='UTC'), 
+                    'from_address': '0x59550cdee3fe8685fdb76281f5bbd9a65dc50c51', 
+                    'to_address': '0x6690819cb98c1211a8e38790d6cd48316ed518db', 
+                    'value': 0.042943815049849295, 
+                    'function_signature': list(my_contract.functions.keys())[0],
+                    'function_data': "".join(test_data)
+                              }, index=[0])
+
+        # cleaning data in appropriate format
+        returned_data = ethdata.CleanDf().clean_transaction_receipts_df(df, my_contract).iloc[0].to_dict()
+        for key in list(returned_data.keys())[:6]:  # remove unnecessary keys
+            returned_data.pop(key)
+
+        expected_data = {'param__endTime': 
+                        [['0xd5524179cb7ae012f5b642c1d6d700bbaa76b96b', 
+                         '0xd953e24b1433fbcce94b5f5b282aa67b7e6d59fb', 
+                         '0x4e15361fd6b4bb609fa63c81a2be19d873717870'], 
+                        ['0x4E484D658700BA6642d075b1Ad1303A049fa23E8']]}
+
+        for key in returned_data:
+            assert returned_data[key] == expected_data[key]

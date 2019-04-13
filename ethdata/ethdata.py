@@ -37,11 +37,11 @@ exception_list = {
         "symbol": "UNI-V1",
         "decimals": 0.0
     },
-	"0x09cabec1ead1c0ba254b09efb3ee13841712be14": {
+    "0x09cabec1ead1c0ba254b09efb3ee13841712be14": {
         "name": "Uniswap V1",
         "symbol": "UNI-V1",
         "decimals": 0.0
-	},
+    },
     "0xbb9bc244d798123fde783fcc1c72d3bb8c189413": {
         "name": "TheDAO",
         "symbol": "TheDAO",
@@ -535,7 +535,7 @@ WHERE address = "{1}"
         
         result = self.run_query(sql)
         if result.shape[0] > 0:
-            result = clean_event_logs_df(result, contract)
+            result = CleanDf().clean_event_logs_df(result, contract)
         return result
     
     def get_transaction_receipts(self, account):
@@ -583,7 +583,7 @@ WHERE (to_address = "{1}"
         
         result = self.run_query(sql)
         if result.shape[0] > 0:
-            result = clean_transaction_receipts_df(result, account)
+            result = CleanDf().clean_transaction_receipts_df(result, account)
         return result
         
 ### HELPERS ###
@@ -606,7 +606,7 @@ def hex_to_string(val):
     Accepts padded or unpadded values.
     """
     if val is None:
-	    return ""
+        return ""
     s = val.strip('0x').rstrip('0')
     if len(s) % 2 == 1:
         s += "0"
@@ -617,7 +617,7 @@ def hex_to_float(val, decimals = 0):
     
     Returns a float or error (which should be handled in situ).
     """
-    
+
     try:
         val = int(val, 16)
     except:
@@ -639,16 +639,16 @@ def hex_to_bool(val):
     """Converts hex string or boolean integer to a clean boolean value.
     
     Returns a boolean data type True or False
-	"""
-	
+    """
+    
     if type(val) == str:
         val = val.strip("0x").rstrip("0")
-		
+        
     if val:
         return True
     else:
         return False
-	
+    
 def make_tz_naive(val):
     """Converts datetime to timezone naive datetime (rounded down to nearest date)."""
     
@@ -669,231 +669,283 @@ def clean_hex_data(val, val_type):
         warnings.warn("Could not convert data type {0}".format(val_type))
         return val
 
-def clean_transaction_receipts_df(df, contract):
-    """Cleans transaction receipts dataframe and tries to add columns with formatted data."""
-    # Make timestamp tz naive & re-order by timestamp
-    df['block_timestamp'] = df['block_timestamp'].dt.tz_localize(None)
-    df.sort_values(by=['block_timestamp'], ascending=True, inplace=True)
-    df.reset_index(drop=True, inplace=True)
+
+class CleanDf:
+    """
+    Converts hexadecimal data from transactions and events into a readable format according to contract ABI
     
-    # clean empty inputs
-    for row in df.itertuples():
-        if row.function_signature == '0x':
-            df.at[row.Index, 'function_signature'] = None
-        if row.function_data == '':
-            df.at[row.Index, 'function_data'] = None
-    
-    if (contract.__class__.__name__ == "Contract" or contract.__class__.__name__ == "Token") and len(contract.functions) > 0:
-        # Create new column for function_name
-        df['function_name'] = None
-        for row in df.itertuples():
-            if row.function_signature is not None and len(row.function_signature) == 10:
-                df.at[row.Index, 'function_name'] = contract.functions[row.function_signature]['function_name']
+    Attributes:
+        df(Pandas object - DataFrame): Holds all hexadecimal data to be converted
+        count(int): Helps methods with determining the index of a row that is being processed
+        raw_rows(list): Holds hexadecimal data for a specific transaction or event
+        data_type(string): Type determines how is a row processed
+    """
+
+    def __init__(self):
+        self.df = None
+        self.count = 0
+        self.raw_rows = []
+        self.data_type = None
+
+    def clean_transaction_receipts_df(self, df, contract):
+        """
+        Cleans transaction receipts dataframe and adds columns with formatted data if possible.
+        Args:
+            df(Pandas object - DataFrame): Holds all hexadecimal data to be converted
+            contract(Contract object): Holds information to convert DataFrame
+        Returns:
+            df: Converted DataFrame
+        """
+
+        self.df = df
+        self.naive_timestamp()
+
+        # Clean empty inputs
+        for row in self.df.itertuples():
+            if row.function_signature == '0x':
+                self.df.at[row.Index, 'function_signature'] = None
+            if row.function_data == '':
+                self.df.at[row.Index, 'function_data'] = None
         
-        # Fill columns for function_data
-        for function_signature in contract.functions:
-            for data_name in contract.functions[function_signature]['data']:
-                df['param_' + data_name] = None
-        
-        for row in df.itertuples():
-            try:
-                data = contract.functions[row.function_signature]['data']
-            except KeyError:
-                continue
+        if (contract.__class__.__name__ == "Contract" or contract.__class__.__name__ == "Token") and len(contract.functions) > 0:
+            # Create new column for function_name
+            self.df['function_name'] = None
+            for row in self.df.itertuples():
+                if row.function_signature is not None and len(row.function_signature) == 10:
+                    self.df.at[row.Index, 'function_name'] = contract.functions[row.function_signature]['function_name']
             
-            # iterate through data
-            d = 0
-            raw_rows_string = df.at[row.Index, "function_data"]
-            raw_rows = [raw_rows_string[i: i + 64] for i in range(0, len(raw_rows_string), 64)]
-
-            for data_name in data:
-                data_type = contract.functions[row.function_signature]['data'][data_name]
-                raw_row = raw_rows[d]
-
-                # checking if row is empty
-                if raw_row is None:
-                    d += 1
+            # Fill columns for function_data
+            for function_signature in contract.functions:
+                for data_name in contract.functions[function_signature]['data']:
+                    self.df['param_' + data_name] = None
+            
+            # Iterate through all of the rows(transactions)
+            for row in self.df.itertuples():
+                try:
+                    data = contract.functions[row.function_signature]['data']
+                except KeyError:
                     continue
 
-                # checking for unsupported type
-                stat1 = data_type.count("[") == 2
-                stat2 = "string[" in data_type
-                if stat1 or stat2:
-                    warnings.warn(f"{data_type} is not yet supported")
-                    df.at[row.Index, 'data_' + data_name] = raw_row
-                    d += 1
-                    continue
+                self.count = 0
+                raw_rows_string = self.df.at[row.Index, "function_data"]
+                self.raw_rows = [raw_rows_string[i: i + 64] for i in range(0, len(raw_rows_string), 64)]
 
-                # dynamic array (string, bytes included)
-                if "[]" in data_type or data_type == "string" or data_type == "bytes":
-                    array_offset = int(hex_to_float(raw_row)/32)  # offset of the first element in the array 
-                    array_length = int(clean_hex_data(raw_rows[array_offset], "int"))
+                # Iterates through all of the data for a specific row(transaction)
+                for data_name in data:
+                    self.data_type = contract.functions[row.function_signature]['data'][data_name]
+                    # Checking if row is empty
+                    if self.raw_rows[self.count] is None:
+                        self.count += 1
+                        continue
+                    self.df.at[row.Index, 'param_' + data_name] = self.iterate_data()
 
-                    if data_type == "string" or data_type == "bytes":
-                        num_rows = int(ceil(array_length/32))
-                        cut_null = None if (array_length % 32) == 0 else (32 - array_length % 32)*2*-1
-                        # iterating through rows of elements and creating a string with them
-                        df.at[row.Index, 'param_' + data_name] = clean_hex_data("".join([raw_rows[i + array_offset + 1] for i in range(num_rows)])[:cut_null], data_type) 
-                        # making used rows empty
-                        for row_index in range(array_offset, array_offset + num_rows + 1):
-                            raw_rows[row_index] = None
+            # Delete raw data & empty columns
+            self.df.drop(columns=["function_signature", "function_data"], inplace=True)
+            self.df.dropna(axis='columns', how='all', inplace=True)
+
+        return self.df
+
+
+    def clean_event_logs_df(self, df, contract):
+        """
+        Cleans event logs dataframe and tries to add columns with formatted data.
+        Args:
+            df(Pandas object - DataFrame): Holds all hexadecimal data to be converted
+            contract(Contract object): Holds information to convert DataFrame
+        Returns:
+            df: Converted DataFrame
+        """
+
+        self.df = df
+        self.naive_timestamp()
+
+        if len(contract.events) > 0:
+            # Count number of anonymous events
+            anon_events = []
+            for item in contract.events:
+                if item == 'Anonymous':
+                    anon_events.append(contract.events[item])
+            
+            # Fill new column for event_name
+            self.df['event_name'] = None
+            for row in self.df.itertuples():
+                try:
+                    self.df.at[row.Index, 'event_name'] = contract.events[row.topics_0]['event_name']
+                except KeyError:
+                    if len(anon_events) == 1:
+                        self.df.at[row.Index, 'event_name'] = contract.events['Anonymous']['event_name']
                     else:
-                        # iterating through rows of elements and creating a list with them
-                        df.at[row.Index, 'param_' + data_name] = [clean_hex_data(raw_rows[i + array_offset + 1],
-                                                                  data_type.rstrip("[]")) for i in range(array_length)]
-                        # making used rows empty
-                        for row_index in range(array_offset, array_offset + array_length + 1):
-                            raw_rows[row_index] = None
-
-                # static array
-                elif "[" in data_type:
-                    array_size = data_type[data_type.index("[") + 1:-1]
-                    # iterating through rows of elements and creating a list with them
-                    df.at[row.Index, 'param_' + data_name] = [clean_hex_data(raw_rows[d + i], data_type.rstrip(
-                                                              f"[{array_size}]")) for i in range(int(array_size))]
-                    d += int(array_size) - 1  # moving iteration to a row following the array's last element
-                
-                # not an array  
-                else:
-                    df.at[row.Index, 'param_' + data_name] = clean_hex_data(raw_row, data_type)
-                d += 1
-
-        # drop raw data & empty columns
-        df.drop(columns=["function_signature", "function_data"], inplace=True)
-        df.dropna(axis='columns', how='all', inplace=True)
-
-    return df
-
-
-def clean_event_logs_df(df, contract):
-    """Cleans event logs dataframe and tries to add columns with formatted data."""
-    # Make timestamp tz naive & re-order by timestamp
-    df['block_timestamp'] = df['block_timestamp'].dt.tz_localize(None)
-    df.sort_values(by=['block_timestamp'], ascending=True, inplace=True)
-    df.reset_index(drop=True, inplace=True)
-
-    if len(contract.events) > 0:
-        # count number of anonymous events
-        anon_events = []
-        for item in contract.events:
-            if item == 'Anonymous':
-                anon_events.append(contract.events[item])
-        
-        # Fill new column for event_name
-        df['event_name'] = None
-        for row in df.itertuples():
-            try:
-                df.at[row.Index, 'event_name'] = contract.events[row.topics_0]['event_name']
-            except KeyError:
-                if len(anon_events) == 1:
-                    df.at[row.Index, 'event_name'] = contract.events['Anonymous']['event_name']
-                else:
-                    warnings.warn("Could not find event_name for {}.".format(row.topics_0))
-                    df.at[row.Index, 'event_name'] = None
-        
-        # Fill columns for other data  
-        for event_hash in contract.events:
-            for topic_name in contract.events[event_hash]['topics']:
-                df['topic_' + topic_name] = None
-            for data_name in contract.events[event_hash]['data']:
-                df['data_' + data_name] = None
-        
-        for row in df.itertuples():
-            try:
-                topics = contract.events[row.topics_0]['topics']
-                data = contract.events[row.topics_0]['data']
-                t = 1 # Start iteration at topic_1
-            except KeyError:
-                topics = contract.events['Anonymous']['topics']
-                data = contract.events['Anonymous']['data']
-                t = 0 # Start iteration at topic_0
+                        warnings.warn("Could not find event_name for {}.".format(row.topics_0))
+                        self.df.at[row.Index, 'event_name'] = None
             
-            # iterate through topics
-            for topic_name in topics:
-                topic_type = topics[topic_name]
-                source = df.at[row.Index, "topics_{}".format(t)]
-
-                # checking for unsupported type
-                stat1 = topic_type.count("[") == 2
-                stat2 = topic_type == "bytes"
-                stat3 = "string" in topic_type
-                if stat1 or stat2 or stat3:
-                    warnings.warn(f"{topic_type} is not yet supported")
-                    df.at[row.Index, 'data_' + topic_name] = source
-                    t += 1
-                    continue
-
-                # checking for an array type
-                if "[" in topic_type:
-                    warnings.warn(f"{topic_type} is not yet supported passed as topic")
-                    df.at[row.Index, 'data_' + topic_name] = source
-                    t += 1
-                    continue
-                
-                df.at[row.Index, 'topic_' + topic_name] = clean_hex_data(source, topic_type)
-                t += 1
+            # Fill columns for other data  
+            for event_hash in contract.events:
+                for topic_name in contract.events[event_hash]['topics']:
+                    self.df['topic_' + topic_name] = None
+                for data_name in contract.events[event_hash]['data']:
+                    self.df['data_' + data_name] = None
             
-            # iterate through data
-            d = 0
-            raw_rows_string = df.at[row.Index, "transaction_data"]
-            if raw_rows_string:
-                raw_rows = [raw_rows_string[2 + i: i + 66] for i in range(0, len(raw_rows_string), 64)]
-
-            for data_name in data:
-                data_type = data[data_name]
-                raw_row = raw_rows[d]
-
-                # checking if row is empty
-                if raw_row is None:
-                    d += 1
-                    continue
-
-                # checking for unsupported type
-                stat1 = data_type.count("[") == 2
-                stat2 = "string[" in data_type
-                if stat1 or stat2:
-                    warnings.warn(f"{data_type} is not yet supported")
-                    df.at[row.Index, 'data_' + data_name] = raw_row
-                    d += 1
-                    continue
-
-                # dynamic array (string, bytes included)
-                if "[]" in data_type or data_type == "string" or data_type == "bytes":
-                    array_offset = int(hex_to_float(raw_row)/32)  # offset of the first element in the array 
-                    array_length = int(clean_hex_data(raw_rows[array_offset], "int"))
-
-                    if data_type == "string" or data_type == "bytes":
-                        num_rows = int(ceil(array_length/32))
-                        cut_null = None if (array_length % 32) == 0 else (32 - array_length % 32)*2*-1
-                        # iterating through rows of elements and creating a string with them
-                        df.at[row.Index, 'data_' + data_name] = clean_hex_data("".join([raw_rows[i + array_offset + 1] for i in range(num_rows)])[:cut_null], data_type) 
-                        # making used rows empty
-                        for row_index in range(array_offset, array_offset + num_rows + 1):
-                            raw_rows[row_index] = None
-                    else:
-                        # iterating through rows of elements and creating a list with them
-                        df.at[row.Index, 'data_' + data_name] = [clean_hex_data(raw_rows[i + array_offset + 1],
-                                                                  data_type.rstrip("[]")) for i in range(array_length)]
-                        # making used rows empty
-                        for row_index in range(array_offset, array_offset + array_length + 1):
-                            raw_rows[row_index] = None
-
-                # static array
-                elif "[" in data_type:
-                    array_size = data_type[data_type.index("[") + 1:-1]
-                    # iterating through rows of elements and creating a list with them
-                    df.at[row.Index, 'data_' + data_name] = [clean_hex_data(raw_rows[d + i], data_type.rstrip(
-                                                              f"[{array_size}]")) for i in range(int(array_size))]
-                    d += int(array_size) - 1  # moving iteration to a row following the array's last element
+            # Iterates through all of the data for a specific row(event)
+            for row in self.df.itertuples():
+                try:
+                    topics = contract.events[row.topics_0]['topics']
+                    data = contract.events[row.topics_0]['data']
+                    t = 1 # Start iteration at topic_1
+                except KeyError:
+                    topics = contract.events['Anonymous']['topics']
+                    data = contract.events['Anonymous']['data']
+                    t = 0 # Start iteration at topic_0
                 
-                # not an array
-                else:
-                    df.at[row.Index, 'data_' + data_name] = clean_hex_data(raw_row, data_type)
+                # Iterate through topics
+                for topic_name in topics:
+                    topic_type = topics[topic_name]
+                    source = self.df.at[row.Index, "topics_{}".format(t)]
+
+                    # Checking for unsupported type
+                    stat1 = "[" in  topic_type
+                    stat2 = topic_type == "bytes" or "string" in topic_type
+                    if stat1 or stat2:
+                        warnings.warn(f"{topic_type} is not yet supported passed as topic")
+                        self.df.at[row.Index, 'data_' + topic_name] = source
+                        t += 1
+                        continue
                     
-                d += 1
+                    self.df.at[row.Index, 'topic_' + topic_name] = clean_hex_data(source, topic_type)
+                    t += 1
+                
+                self.count = 0
+                raw_rows_string = self.df.at[row.Index, "transaction_data"]
+                if raw_rows_string:
+                    self.raw_rows = [raw_rows_string[2 + i: i + 66] for i in range(0, len(raw_rows_string), 64)]
 
-        # drop raw data & empty columns
-        df.drop(columns=["topics_0", "topics_1", "topics_2", "topics_3", "transaction_data"], inplace=True)
-        df.dropna(axis='columns', how='all', inplace=True)
+                # Iterate through data(events)
+                for data_name in data:
+                    self.data_type = data[data_name]
+                    # Checking if row is empty
+                    if self.raw_rows[self.count] is None:
+                        self.count += 1
+                        continue
+                    self.df.at[row.Index, 'data_' + data_name] = self.iterate_data()
+
+            # Delete raw data & empty columns
+            self.df.drop(columns=["topics_0", "topics_1", "topics_2", "topics_3", "transaction_data"], inplace=True)
+            self.df.dropna(axis='columns', how='all', inplace=True)
+        
+        return self.df
+
+    def iterate_data(self):
+        """
+        Iterates through rows and process them according to ABI
+        
+        Returns:
+            result(str/list/int): Converted row
+        """
+
+        raw_row = self.raw_rows[self.count]
+        # Checking if it is a static array
+        stat1 = self.data_type[-2].isdigit()
+        # Checking if it is an array
+        stat2 = "[" in self.data_type
+        # String and bytes are dynamic arrays
+        stat3 = "string" == self.data_type or "bytes" ==  self.data_type
+        
+        # Static array
+        if stat1 and stat2:
+            result = self.static_array(self.count)
+        # Dynamic array
+        elif stat2 or stat3:
+            array_offset = int(hex_to_float(raw_row)/32)  # offset of the first element in the array 
+            result = self.dynamic_array(array_offset)
+            self.raw_rows[array_offset] = None
+        # Not an array  
+        else:
+            result = clean_hex_data(raw_row, self.data_type)
+
+        self.count += 1
+        return result
+
+    def dynamic_array(self, ind):
+        """
+        Handles dynamic arrays
+        
+        Args:
+            ind(int): Position of the row that is being processed
+        Returns:
+            result(list): Processed data
+        """
+
+        array_length = int(clean_hex_data(self.raw_rows[ind], "int"))
+        data_type = self.data_type
+        
+        # String or Bytes
+        if data_type == "string" or data_type == "bytes":
+            num_rows = int(ceil(array_length/32))
+            cut_null = None if (array_length % 32) == 0 else (32 - array_length % 32)*2*-1
+            # Iterating through rows of elements and creating a string with them
+            result = clean_hex_data("".join([self.raw_rows[i + ind + 1] for i in range(num_rows)])[:cut_null], data_type) 
+            for row_index in range(ind, num_rows + 1 + ind):
+                self.raw_rows[row_index] = None
+            return result
+        # Dynamic-Dynamic array
+        elif "[][]" in data_type or data_type == "string[]":
+            self.data_type = data_type[:-2]
+            result = [self.dynamic_array(int(hex_to_float(self.raw_rows[ind + 1 +i])/32) + ind + 1) for i in range(array_length)]
+        # Dynamic-Static array
+        elif "][]" in data_type:
+            self.data_type = data_type.replace("[]", "")
+            inner_array_size = int(data_type[data_type.index("[") + 1: data_type.index("][")])
+            result = [self.static_array(i*inner_array_size + ind + 1) for i in range(array_length)]
+        # 1D dynamic array
+        else:
+            # Iterating through rows of elements and creating a list with them
+            result = [clean_hex_data(self.raw_rows[i + 1 + ind],
+                      data_type.rstrip("[]")) for i in range(array_length)]
+        
+        # Making used rows empty
+        for row_index in range(ind, ind + array_length + 1):
+            self.raw_rows[row_index] = None
+        return result
+
+    def static_array(self, ind):
+        """
+        Handles dynamic arrays
+        
+        Args:
+            ind(int): Position of the row that is being processed
+        Returns:
+            result(list): Processed data
+        """
+
+        data_type = self.data_type
+        
+        if data_type.count("[") == 1:
+            array_size = int(data_type[data_type.index("[") + 1: -1])
+        else:
+            array_size = int(data_type[data_type.index("][") + 2: -1])
+
+        # Static-Dynamic array
+        if "[]" in data_type or "string" in data_type or "bytes" in data_type:
+            self.data_type = data_type.replace(f"[{array_size}]", "")
+            result = [self.dynamic_array(int(hex_to_float(self.raw_rows[ind + i])/32) + ind) for i in range(array_size)]
+        # Static-Static array
+        elif data_type.count("[") == 2:
+            self.data_type = data_type = data_type.replace(f"[{array_size}]", "")
+            inner_array_size = int(data_type[data_type.index("[") + 1: -1])
+            result = [self.static_array(i*(inner_array_size) + ind) for i in range(array_size)]
+        # 1D static array
+        else:
+            result = [clean_hex_data(self.raw_rows[ind + i], data_type.rstrip(
+                      f"[{array_size}]")) for i in range(int(array_size))]
+        
+        # Making used rows empty
+        for row_index in range(ind, ind + array_size):
+            self.raw_rows[row_index] = None
+        return result
+
+    def naive_timestamp(self):
+        '''Make timestamp tz naive & re-order by timestamp'''
+        self.df['block_timestamp'] = self.df['block_timestamp'].dt.tz_localize(None)
+        self.df.sort_values(by=['block_timestamp'], ascending=True, inplace=True)
+        self.df.reset_index(drop=True, inplace=True)
+
     
-    return df
