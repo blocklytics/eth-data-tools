@@ -289,7 +289,7 @@ class TestArraysEventLogs:
         my_contract = ethdata.Contract("0x75228dce4d82566d93068a8d5d49435216551599")
         my_contract.query_range = {"start": "2019-04-01", "end": "2019-04-01"}
         df_test = my_contract.event_logs
-        returned_data = df_test.iloc[55]
+        returned_data = df_test.iloc[54]
 
         assert returned_data.data_description == "How many listings will DeFi Pulse have by June 28th, 2019 ? "
         assert returned_data.data_extraInfo == ('{"longDescription":"DeFi Pulse tracks open finance applications '
