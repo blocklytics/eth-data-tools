@@ -805,7 +805,7 @@ class CleanDf:
                     stat1 = "[" in  topic_type
                     stat2 = topic_type == "bytes" or "string" in topic_type
                     if stat1 or stat2:
-                        warnings.warn(f"{topic_type} is not yet supported passed as topic")
+                        warnings.warn("{} is not yet supported passed as topic".format(topic_type))
                         self.df.at[row.Index, 'data_' + topic_name] = source
                         t += 1
                         continue
@@ -925,17 +925,17 @@ class CleanDf:
 
         # Static-Dynamic array
         if "[]" in data_type or "string" in data_type or "bytes" in data_type:
-            self.data_type = data_type.replace(f"[{array_size}]", "")
+            self.data_type = data_type.replace("[{}]".format(array_size), "")
             result = [self.dynamic_array(int(hex_to_float(self.raw_rows[ind + i])/32) + ind) for i in range(array_size)]
         # Static-Static array
         elif data_type.count("[") == 2:
-            self.data_type = data_type = data_type.replace(f"[{array_size}]", "")
+            self.data_type = data_type = data_type.replace("[{}]".format(array_size), "")
             inner_array_size = int(data_type[data_type.index("[") + 1: -1])
             result = [self.static_array(i*(inner_array_size) + ind) for i in range(array_size)]
         # 1D static array
         else:
             result = [clean_hex_data(self.raw_rows[ind + i], data_type.rstrip(
-                      f"[{array_size}]")) for i in range(int(array_size))]
+                      "[{}]".format(array_size))) for i in range(int(array_size))]
         
         # Making used rows empty
         for row_index in range(ind, ind + array_size):

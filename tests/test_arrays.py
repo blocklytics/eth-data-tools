@@ -485,7 +485,7 @@ class TestArraysEventLogs:
             ethdata.CleanDf().clean_event_logs_df(df, my_contract)
         record = [warning for warning in record if warning.category == UserWarning]
         for n, warning in enumerate(record):
-            assert str(warning.message) == f"{eg_array_types[n]} is not yet supported passed as topic"
+            assert str(warning.message) == "{} is not yet supported passed as topic".format(eg_array_types[n])
 
     def test_dynamic_array_handling_with_data(self):
         my_contract = ethdata.Contract("0x2a0c0dbecc7e4d658f48e01e3fa353f44050c208")
@@ -581,7 +581,7 @@ class TestArraysEventLogs:
             ethdata.CleanDf().clean_event_logs_df(df, my_contract)
         record = [warning for warning in record if warning.category == UserWarning]
         for n, warning in enumerate(record):
-            assert str(warning.message) == f"{eg_array_types[n]} is not yet supported passed as topic"
+            assert str(warning.message) == "{} is not yet supported passed as topic".format(eg_array_types[n])
 
     def test_2D_array_types_with_topics(self):
         eg_unsupported_types = ['address[][]', 'int8[2][]', 'bytes32[][3]', 'bool[2][3]', 'string[2]', 'string[]']
@@ -621,7 +621,7 @@ class TestArraysEventLogs:
             ethdata.CleanDf().clean_event_logs_df(df, my_contract)
         record = [warning for warning in record if warning.category == UserWarning]
         for n, warning in enumerate(record):
-            assert str(warning.message) == f"{eg_unsupported_types[n]} is not yet supported passed as topic"
+            assert str(warning.message) == "{} is not yet supported passed as topic".format(eg_unsupported_types[n])
 
 
 class TestTwoDimensionalArrays:
