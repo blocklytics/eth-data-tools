@@ -481,9 +481,11 @@ class TestArraysEventLogs:
             'transaction_data': None
             }, index=[0])
 
-        with pytest.warns(UserWarning) as record:
+        with pytest.warns(UserWarning) as record_all:
             ethdata.CleanDf().clean_event_logs_df(df, my_contract)
-        record = [warning for warning in record if warning.category == UserWarning]
+        record = []
+        for warning in record_all:
+            record.append(warning) if warning.category == UserWarning else ""
         for n, warning in enumerate(record):
             assert str(warning.message) == "{} is not yet supported passed as topic".format(eg_array_types[n])
 
@@ -577,9 +579,11 @@ class TestArraysEventLogs:
             'transaction_data': None
             }, index=[0])
 
-        with pytest.warns(UserWarning) as record:
+        with pytest.warns(UserWarning) as record_all:
             ethdata.CleanDf().clean_event_logs_df(df, my_contract)
-        record = [warning for warning in record if warning.category == UserWarning]
+        record = []
+        for warning in record_all:
+            record.append(warning) if warning.category == UserWarning else ""
         for n, warning in enumerate(record):
             assert str(warning.message) == "{} is not yet supported passed as topic".format(eg_array_types[n])
 
@@ -617,9 +621,11 @@ class TestArraysEventLogs:
             'transaction_data': None
             }, index=[0])
 
-        with pytest.warns(UserWarning) as record:
+        with pytest.warns(UserWarning) as record_all:
             ethdata.CleanDf().clean_event_logs_df(df, my_contract)
-        record = [warning for warning in record if warning.category == UserWarning]
+        record = []
+        for warning in record_all:
+            record.append(warning) if warning.category == UserWarning else ""
         for n, warning in enumerate(record):
             assert str(warning.message) == "{} is not yet supported passed as topic".format(eg_unsupported_types[n])
 
