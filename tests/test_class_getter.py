@@ -74,7 +74,7 @@ class TestTokenGetters(object):
        assert my_token.name == "Maker"
        assert my_token.symbol == "MKR"
        assert my_token.decimals == 18.0
-       assert my_token.total_supply == 1_000_000
+       assert my_token.total_supply == 1000000
        
     def test_getter_7_valid_token_exception_list(self):
        my_token = ethdata.Token("0xeb9951021698b42e4399f9cbb6267aa35f82d59d")
