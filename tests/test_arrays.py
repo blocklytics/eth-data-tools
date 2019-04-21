@@ -22,7 +22,7 @@ class TestArraysTransactionReceipts:
         my_contract.query_range = {"start": "2019-03-29", "end": "2019-03-29"}
         df = my_contract.transaction_receipts
         returned_data = df.loc[df.transaction_hash == "0x6396ea4d7001cddde13597ea20e9a282f224a9c5db96bf7676bb08b09a3a09e5"].to_dict("r")[0]
-        for key in list(returned_data.keys())[:6]:  # remove unnecessary keys
+        for key in ("transaction_hash", "block_timestamp", "function_name", "from_address", "to_address", "value"):  # remove unnecessary keys
             returned_data.pop(key)
 
         expected_data = {
@@ -106,7 +106,7 @@ class TestArraysTransactionReceipts:
 
         # cleaning data in appropriate format
         returned_data = ethdata.CleanDf().clean_transaction_receipts_df(df, my_contract).iloc[0].to_dict()
-        for key in list(returned_data.keys())[:6]:  # remove unnecessary keys
+        for key in ("transaction_hash", "block_timestamp", "function_name", "from_address", "to_address", "value"):  # remove unnecessary keys
             returned_data.pop(key)
 
         expected_data = {
@@ -183,7 +183,7 @@ class TestArraysTransactionReceipts:
 
         # cleaning data in appropriate format
         returned_data = ethdata.CleanDf().clean_transaction_receipts_df(df, my_contract).iloc[0].to_dict()
-        for key in list(returned_data.keys())[:6]:  # remove unnecessary keys
+        for key in ("transaction_hash", "block_timestamp", "function_name", "from_address", "to_address", "value"):  # remove unnecessary keys
             returned_data.pop(key)
 
         expected_result = {
@@ -256,7 +256,7 @@ class TestArraysTransactionReceipts:
 
         # cleaning data in appropriate format
         returned_data = ethdata.CleanDf().clean_transaction_receipts_df(df, my_contract).iloc[0].to_dict()
-        for key in list(returned_data.keys())[:6]:  # remove unnecessary keys
+        for key in ("transaction_hash", "block_timestamp", "function_name", "from_address", "to_address", "value"):  # remove unnecessary keys
             returned_data.pop(key)
 
         expected_result = {
@@ -289,7 +289,7 @@ class TestArraysEventLogs:
         my_contract = ethdata.Contract("0x75228dce4d82566d93068a8d5d49435216551599")
         my_contract.query_range = {"start": "2019-04-01", "end": "2019-04-01"}
         df_test = my_contract.event_logs
-        returned_data = df_test.iloc[55]
+        returned_data = df_test.iloc[54]
 
         assert returned_data.data_description == "How many listings will DeFi Pulse have by June 28th, 2019 ? "
         assert returned_data.data_extraInfo == ('{"longDescription":"DeFi Pulse tracks open finance applications '
@@ -680,7 +680,7 @@ class TestTwoDimensionalArrays:
 
         # cleaning data in appropriate format
         returned_data = ethdata.CleanDf().clean_transaction_receipts_df(df, my_contract).iloc[0].to_dict()
-        for key in list(returned_data.keys())[:6]:  # remove unnecessary keys
+        for key in ("transaction_hash", "block_timestamp", "function_name", "from_address", "to_address", "value"):  # remove unnecessary keys
             returned_data.pop(key)
 
         expected_data = {'param__endTime': [[10.0, 11.0, 12.0], [13.0]]}
@@ -738,7 +738,7 @@ class TestTwoDimensionalArrays:
 
         # cleaning data in appropriate format
         returned_data = ethdata.CleanDf().clean_transaction_receipts_df(df, my_contract).iloc[0].to_dict()
-        for key in list(returned_data.keys())[:6]:  # remove unnecessary keys
+        for key in ("transaction_hash", "block_timestamp", "function_name", "from_address", "to_address", "value"):  # remove unnecessary keys
             returned_data.pop(key)
 
         expected_data = {'param__endTime': [[1.0, 2.0], [3.0]], 'param__makarov': ['one', 'two', 'three']}
@@ -781,7 +781,7 @@ class TestTwoDimensionalArrays:
 
         # cleaning data in appropriate format
         returned_data = ethdata.CleanDf().clean_transaction_receipts_df(df, my_contract).iloc[0].to_dict()
-        for key in list(returned_data.keys())[:6]:  # remove unnecessary keys
+        for key in ("transaction_hash", "block_timestamp", "function_name", "from_address", "to_address", "value"):  # remove unnecessary keys
             returned_data.pop(key)
 
         expected_data = {'param__endTime': [("486f77206d616e79206c697374696e67732077696c6c204465"
@@ -827,9 +827,9 @@ class TestTwoDimensionalArrays:
 
         # cleaning data in appropriate format
         returned_data = ethdata.CleanDf().clean_transaction_receipts_df(df, my_contract).iloc[0].to_dict()
-        for key in list(returned_data.keys())[:6]:  # remove unnecessary keys
+        keys = list(returned_data.keys())[:6]
+        for key in ("transaction_hash", "block_timestamp", "function_name", "from_address", "to_address", "value"):  # remove unnecessary keys
             returned_data.pop(key)
-
         expected_data = {'param__endTime': [[1.0, 4.0], [2.0, 3.0], [9.0, 5.0]]}
 
         for key in returned_data:
@@ -875,7 +875,7 @@ class TestTwoDimensionalArrays:
 
         # cleaning data in appropriate format
         returned_data = ethdata.CleanDf().clean_transaction_receipts_df(df, my_contract).iloc[0].to_dict()
-        for key in list(returned_data.keys())[:6]:  # remove unnecessary keys
+        for key in ("transaction_hash", "block_timestamp", "function_name", "from_address", "to_address", "value"):  # remove unnecessary keys
             returned_data.pop(key)
 
         expected_data = {'param__endTime': [[2.0, 3.0, 4.0], [1.0, 8.0, 2.0], [4.0, 1.0, 0.0]]}
@@ -920,7 +920,7 @@ class TestTwoDimensionalArrays:
 
         # cleaning data in appropriate format
         returned_data = ethdata.CleanDf().clean_transaction_receipts_df(df, my_contract).iloc[0].to_dict()
-        for key in list(returned_data.keys())[:6]:  # remove unnecessary keys
+        for key in ("transaction_hash", "block_timestamp", "function_name", "from_address", "to_address", "value"):  # remove unnecessary keys
             returned_data.pop(key)
 
         expected_data = {'param__endTime': 
