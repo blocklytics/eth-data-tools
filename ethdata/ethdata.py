@@ -8,6 +8,7 @@ from Crypto.Hash import keccak
 from google.cloud import bigquery
 import pandas as pd
 from math import ceil
+from collections import OrderedDict
 
 # BigQuery Public Ethereum Datasets
 public_dataset = {
@@ -164,11 +165,11 @@ class Contract(Account):
             if item['type'] == 'function':
                 function_name = item['name']
                 input_types = []
-                data = {}
+                data = OrderedDict()
                         
                 for input_ in item['inputs']:
                     input_types.append(input_['type'])
-                    data[input_['name']] = input_['type']
+                    data.update({input_['name']: input_['type']})
                             
                 function_prehash = "{0}({1})".format(function_name, ",".join(input_types))
                 function_signature = get_function_signature(function_prehash)
@@ -186,17 +187,17 @@ class Contract(Account):
             if item['type'] == 'event':
                 event_name = item['name']
                 input_types = []
-                topics = {}
-                data = {}
+                topics = OrderedDict()
+                data = OrderedDict()
                 anonymous = item['anonymous']
                         
                 for input_ in item['inputs']:
                     input_types.append(input_['type'])
                                 
                     if input_['indexed']:
-                        topics[input_['name']] = input_['type']
+                        topics.update({input_['name']: input_['type']})
                     else:
-                        data[input_['name']] = input_['type']
+                        data.update({input_['name']: input_['type']})
                     
                 if not anonymous:
                     event_prehash = "{0}({1})".format(event_name, ",".join(input_types))
@@ -729,7 +730,6 @@ class CleanDf:
                 self.count = 0
                 raw_rows_string = self.df.at[row.Index, "function_data"]
                 self.raw_rows = [raw_rows_string[i: i + 64] for i in range(0, len(raw_rows_string), 64)]
-
                 # Iterates through all of the data for a specific row(transaction)
                 for data_name in data:
                     self.data_type = contract.functions[row.function_signature]['data'][data_name]
@@ -737,7 +737,8 @@ class CleanDf:
                     if self.raw_rows[self.count] is None:
                         self.count += 1
                         continue
-                    self.df.at[row.Index, 'param_' + data_name] = self.iterate_data()
+                    result = self.iterate_data()
+                    self.df.at[row.Index, 'param_' + data_name] = result
 
             # Delete raw data & empty columns
             self.df.drop(columns=["function_signature", "function_data"], inplace=True)
@@ -805,7 +806,7 @@ class CleanDf:
                     stat1 = "[" in  topic_type
                     stat2 = topic_type == "bytes" or "string" in topic_type
                     if stat1 or stat2:
-                        warnings.warn(f"{topic_type} is not yet supported passed as topic")
+                        warnings.warn("{} is not yet supported passed as topic".format(topic_type))
                         self.df.at[row.Index, 'data_' + topic_name] = source
                         t += 1
                         continue
@@ -924,18 +925,18 @@ class CleanDf:
             array_size = int(data_type[data_type.index("][") + 2: -1])
 
         # Static-Dynamic array
-        if "[]" in data_type or "string" in data_type or "bytes" in data_type:
-            self.data_type = data_type.replace(f"[{array_size}]", "")
+        if "[]" in data_type or "string" in data_type or "bytes[" in data_type:
+            self.data_type = data_type.replace("[{}]".format(array_size), "")
             result = [self.dynamic_array(int(hex_to_float(self.raw_rows[ind + i])/32) + ind) for i in range(array_size)]
         # Static-Static array
         elif data_type.count("[") == 2:
-            self.data_type = data_type = data_type.replace(f"[{array_size}]", "")
+            self.data_type = data_type = data_type.replace("[{}]".format(array_size), "")
             inner_array_size = int(data_type[data_type.index("[") + 1: -1])
             result = [self.static_array(i*(inner_array_size) + ind) for i in range(array_size)]
         # 1D static array
         else:
             result = [clean_hex_data(self.raw_rows[ind + i], data_type.rstrip(
-                      f"[{array_size}]")) for i in range(int(array_size))]
+                      "[{}]".format(array_size))) for i in range(int(array_size))]
         
         # Making used rows empty
         for row_index in range(ind, ind + array_size):

@@ -24,20 +24,20 @@ class TestHelpers(object):
 	    assert ethdata.hex_to_string(None) == ""
 
     def test_hex_to_float_method(self):
-        assert ethdata.hex_to_float(1_000_000_000_000_000_000, decimals=18) == 1
+        assert ethdata.hex_to_float(1000000000000000000, decimals=18) == 1
         assert ethdata.hex_to_float(0.123) == 0.123
-        assert ethdata.hex_to_float("0xdeadbeef") == 3_735_928_559
-        assert ethdata.hex_to_float("deadbeef") == 3_735_928_559
+        assert ethdata.hex_to_float("0xdeadbeef") == 3735928559
+        assert ethdata.hex_to_float("deadbeef") == 3735928559
         assert ethdata.hex_to_float(10) != ethdata.hex_to_float("10")
         assert ethdata.hex_to_float("0x0000000000000000000000000000000000000000033b2e3c9fd0803ce8000000") == 1e+27
         
     def test_clean_hex_data(self):
         assert ethdata.clean_hex_data("2e6236591bfa37c683ce60d6cfde40396a114ff1", "address") == "0x2e6236591bfa37c683ce60d6cfde40396a114ff1"
-        assert ethdata.clean_hex_data("0xdeadbeef", "uint256") == 3_735_928_559
-        assert ethdata.clean_hex_data("0xdeadbeef", "uint8") == 3_735_928_559
-        assert ethdata.clean_hex_data("0xdeadbeef", "int256") == 3_735_928_559
-        assert ethdata.clean_hex_data("0xdeadbeef", "int64") == 3_735_928_559
-        assert ethdata.clean_hex_data("0xdeadbeef", "int8") == 3_735_928_559
+        assert ethdata.clean_hex_data("0xdeadbeef", "uint256") == 3735928559
+        assert ethdata.clean_hex_data("0xdeadbeef", "uint8") == 3735928559
+        assert ethdata.clean_hex_data("0xdeadbeef", "int256") == 3735928559
+        assert ethdata.clean_hex_data("0xdeadbeef", "int64") == 3735928559
+        assert ethdata.clean_hex_data("0xdeadbeef", "int8") == 3735928559
         assert ethdata.clean_hex_data("5343484150000000000000000000000000000000000000000000000000000000", "string") == "SCHAP"
         assert ethdata.clean_hex_data(0, "bool") == False
         with pytest.warns(UserWarning):

@@ -1,6 +1,11 @@
 language: python
-python:
-  - 3.6-dev
+matrix:
+  include:
+    - python: 3.5
+    - python: 3.6
+    - python: 3.7
+      dist: xenial
+      sudo: true
 cache: pip
 env:
   global:
@@ -10,6 +15,8 @@ env:
 before_install:
   - openssl aes-256-cbc -K $encrypted_b526b8425f11_key -iv $encrypted_b526b8425f11_iv
     -in gcloud_credentials.json.enc -out gcloud_credentials.json -d
+  - pip install cython
+  - pip install numpy==1.16
 install:
   - python setup.py develop
   - pip install codecov
