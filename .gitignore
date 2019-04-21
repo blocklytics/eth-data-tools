@@ -1,9 +1,0 @@
-__pycache__/
-*.py[cod]
-
-*.egg-info
-dist
-build
-
-*.DS_Store
-gcloud_credentials.json
