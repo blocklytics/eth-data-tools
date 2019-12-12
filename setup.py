@@ -26,7 +26,7 @@ setuptools.setup(
     install_requires=[
     	'requests',
     	'pycryptodome',
-    	'google-cloud-bigquery[pyarrow]',
+    	'google-cloud-bigquery[pyarrow]==1.22.0',
     	'pandas'
     ],
     tests_require=[
