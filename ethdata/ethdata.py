@@ -527,9 +527,9 @@ LIMIT 1""".format(public_dataset['traces'], contract.address)
         
         date_sql = ""
         if 'start' in contract.query_range:
-            date_sql += "AND block_timestamp >= \"{0}\"".format(dt.datetime.strptime(contract.query_range['start'], '%Y-%m-%d'))
+            date_sql += "AND block_timestamp >= \"{0}\"".format(contract.query_range['start'])
         if 'end' in contract.query_range:
-            date_sql += "\nAND block_timestamp < \"{0}\"".format(dt.datetime.strptime(contract.query_range['end'], '%Y-%m-%d') + dt.timedelta(days=1))
+            date_sql += "\nAND block_timestamp < \"{0}\"".format(contract.query_range['end'])
             
         sql = """
 SELECT
@@ -574,9 +574,9 @@ WHERE address = "{1}"
         
         date_sql = ""
         if 'start' in account.query_range:
-            date_sql += "AND block_timestamp >= \"{0}\"\n".format(dt.datetime.strptime(account.query_range['start'], '%Y-%m-%d'))
+            date_sql += "AND block_timestamp >= \"{0}\"\n".format(account.query_range['start'])
         if 'end' in account.query_range:
-            date_sql += "AND block_timestamp < \"{0}\"".format(dt.datetime.strptime(account.query_range['end'], '%Y-%m-%d') + dt.timedelta(days=1))
+            date_sql += "AND block_timestamp < \"{0}\"".format(account.query_range['end'])
             
         sql = """
 SELECT
