@@ -12,13 +12,13 @@ from collections import OrderedDict
 
 # BigQuery Public Ethereum Datasets
 public_dataset = {
-    "blocks": "bigquery-public-data.ethereum_blockchain.blocks"
-    ,"contracts": "bigquery-public-data.ethereum_blockchain.contracts"
-    ,"logs": "bigquery-public-data.ethereum_blockchain.logs"
-    ,"token_transfers": "bigquery-public-data.ethereum_blockchain.token_transfers"
-    ,"tokens": "bigquery-public-data.ethereum_blockchain.tokens"
-    ,"traces": "bigquery-public-data.ethereum_blockchain.traces"
-    ,"transactions": "bigquery-public-data.ethereum_blockchain.transactions"
+    "blocks": "bigquery-public-data.crypto_ethereum.blocks"
+    ,"contracts": "bigquery-public-data.crypto_ethereum.contracts"
+    ,"logs": "bigquery-public-data.crypto_ethereum.logs"
+    ,"token_transfers": "bigquery-public-data.crypto_ethereum.token_transfers"
+    ,"tokens": "bigquery-public-data.crypto_ethereum.tokens"
+    ,"traces": "bigquery-public-data.crypto_ethereum.traces"
+    ,"transactions": "bigquery-public-data.crypto_ethereum.transactions"
 }
 
 # Exception list
