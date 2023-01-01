@@ -14,17 +14,27 @@ Offers developers and analysts a simple way to extract and analyse historical Et
 
 https://docs.blocklytics.org/ethdata/introduction
 
+Note you will need set two environment variables:
+
+- GOOGLE_APPLICATION_CREDENTIALS set to your json service account key. See [here](https://cloud.google.com/bigquery/docs/quickstarts/quickstart-client-libraries) for how to create this
+- ETHERSCAN_API_KEY. Key can be created for free on https://etherscan.io
+
 # GitHub
 
 https://github.com/blocklytics/eth-data-tools
 
-# How to contribute / install locally
+# How to install from local copy
 
-- Fork your own copy
 - git clone locally
 - conda create --name ethdata
 - condo activate ethdata
 - conda install pip
-- which pip [just to check you're now referring to the pip in your condo env]
+- which pip [just to check you're now referring to the pip in your conda env]
 - pip install -e . [this installs the package into ethdata according to the setup.py instructions]
 - conda install pytest-cov [required to run the tests]
+
+# How to install from remote
+
+This package is hosted here: https://pypi.org/project/eth-data-tools/
+
+pip install eth-data-tools
