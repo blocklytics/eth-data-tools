@@ -14,7 +14,7 @@ Offers developers and analysts a simple way to extract and analyse historical Et
 
 https://docs.blocklytics.org/ethdata/introduction
 
-Note you will need set two environment variables:
+Note you will need to set two environment variables:
 
 - GOOGLE_APPLICATION_CREDENTIALS set to your json service account key. See [here](https://cloud.google.com/bigquery/docs/quickstarts/quickstart-client-libraries) for how to create this
 - ETHERSCAN_API_KEY. Key can be created for free on https://etherscan.io
