@@ -17,3 +17,14 @@ https://docs.blocklytics.org/ethdata/introduction
 # GitHub
 
 https://github.com/blocklytics/eth-data-tools
+
+# How to contribute / install locally
+
+- Fork your own copy
+- git clone locally
+- conda create --name ethdata
+- condo activate ethdata
+- conda install pip
+- which pip [just to check you're now referring to the pip in your condo env]
+- pip install -e . [this installs the package into ethdata according to the setup.py instructions]
+- conda install pytest-cov [required to run the tests]

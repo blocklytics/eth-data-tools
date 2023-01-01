@@ -110,6 +110,8 @@ class Contract(Account):
         self.abi = None
         self.creation_date = None
         self.event_logs = None
+        self.functions = None
+        self.events = None
         
     @property
     def abi(self):
@@ -160,57 +162,67 @@ class Contract(Account):
 
     @property
     def functions(self):
-        self.__functions = {}
-        for item in self.abi:
-            if item['type'] == 'function':
-                function_name = item['name']
-                input_types = []
-                data = OrderedDict()
-                        
-                for input_ in item['inputs']:
-                    input_types.append(input_['type'])
-                    data.update({input_['name']: input_['type']})
-                            
-                function_prehash = "{0}({1})".format(function_name, ",".join(input_types))
-                function_signature = get_function_signature(function_prehash)
-                        
-                self.__functions[function_signature] = {
-                    "function_name": function_name,
-                    "data": data
-                }
+        if self.__functions is None:
+            self.__functions = {}
+            for item in self.abi:
+                if item['type'] == 'function':
+                    function_name = item['name']
+                    input_types = []
+                    data = OrderedDict()
+
+                    for input_ in item['inputs']:
+                        input_types.append(input_['type'])
+                        data.update({input_['name']: input_['type']})
+
+                    function_prehash = "{0}({1})".format(function_name, ",".join(input_types))
+                    function_signature = get_function_signature(function_prehash)
+
+                    self.__functions[function_signature] = {
+                        "function_name": function_name,
+                        "data": data
+                    }
         return self.__functions
+
+    @functions.setter
+    def functions(self, val):
+        self.__functions = val
     
     @property
     def events(self):
-        self.__events = {}
-        for item in self.abi:
-            if item['type'] == 'event':
-                event_name = item['name']
-                input_types = []
-                topics = OrderedDict()
-                data = OrderedDict()
-                anonymous = item['anonymous']
-                        
-                for input_ in item['inputs']:
-                    input_types.append(input_['type'])
-                                
-                    if input_['indexed']:
-                        topics.update({input_['name']: input_['type']})
+        if self.__events is None:
+            self.__events = {}
+            for item in self.abi:
+                if item['type'] == 'event':
+                    event_name = item['name']
+                    input_types = []
+                    topics = OrderedDict()
+                    data = OrderedDict()
+                    anonymous = item['anonymous']
+
+                    for input_ in item['inputs']:
+                        input_types.append(input_['type'])
+
+                        if input_['indexed']:
+                            topics.update({input_['name']: input_['type']})
+                        else:
+                            data.update({input_['name']: input_['type']})
+
+                    if not anonymous:
+                        event_prehash = "{0}({1})".format(event_name, ",".join(input_types))
+                        event_hash = get_event_hash(event_prehash)
                     else:
-                        data.update({input_['name']: input_['type']})
-                    
-                if not anonymous:
-                    event_prehash = "{0}({1})".format(event_name, ",".join(input_types))
-                    event_hash = get_event_hash(event_prehash)
-                else:
-                    event_hash = "Anonymous"
-                        
-                self.__events[event_hash] = {
-                    "event_name": event_name,
-                    "topics": topics,
-                    "data": data
-                }
+                        event_hash = "Anonymous"
+
+                    self.__events[event_hash] = {
+                        "event_name": event_name,
+                        "topics": topics,
+                        "data": data
+                    }
         return self.__events
+
+    @events.setter
+    def events(self, val):
+        self.__events = val
 
 ###############
 # TOKEN CLASS #
