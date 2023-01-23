@@ -12,13 +12,13 @@ from collections import OrderedDict
 
 # BigQuery Public Ethereum Datasets
 public_dataset = {
-    "blocks": "bigquery-public-data.ethereum_blockchain.blocks"
-    ,"contracts": "bigquery-public-data.ethereum_blockchain.contracts"
-    ,"logs": "bigquery-public-data.ethereum_blockchain.logs"
-    ,"token_transfers": "bigquery-public-data.ethereum_blockchain.token_transfers"
-    ,"tokens": "bigquery-public-data.ethereum_blockchain.tokens"
-    ,"traces": "bigquery-public-data.ethereum_blockchain.traces"
-    ,"transactions": "bigquery-public-data.ethereum_blockchain.transactions"
+    "blocks": "bigquery-public-data.crypto_ethereum.blocks"
+    ,"contracts": "bigquery-public-data.crypto_ethereum.contracts"
+    ,"logs": "bigquery-public-data.crypto_ethereum.logs"
+    ,"token_transfers": "bigquery-public-data.crypto_ethereum.token_transfers"
+    ,"tokens": "bigquery-public-data.crypto_ethereum.tokens"
+    ,"traces": "bigquery-public-data.crypto_ethereum.traces"
+    ,"transactions": "bigquery-public-data.crypto_ethereum.transactions"
 }
 
 # Exception list
@@ -110,6 +110,8 @@ class Contract(Account):
         self.abi = None
         self.creation_date = None
         self.event_logs = None
+        self.functions = None
+        self.events = None
         
     @property
     def abi(self):
@@ -160,57 +162,67 @@ class Contract(Account):
 
     @property
     def functions(self):
-        self.__functions = {}
-        for item in self.abi:
-            if item['type'] == 'function':
-                function_name = item['name']
-                input_types = []
-                data = OrderedDict()
-                        
-                for input_ in item['inputs']:
-                    input_types.append(input_['type'])
-                    data.update({input_['name']: input_['type']})
-                            
-                function_prehash = "{0}({1})".format(function_name, ",".join(input_types))
-                function_signature = get_function_signature(function_prehash)
-                        
-                self.__functions[function_signature] = {
-                    "function_name": function_name,
-                    "data": data
-                }
+        if self.__functions is None:
+            self.__functions = {}
+            for item in self.abi:
+                if item['type'] == 'function':
+                    function_name = item['name']
+                    input_types = []
+                    data = OrderedDict()
+
+                    for input_ in item['inputs']:
+                        input_types.append(input_['type'])
+                        data.update({input_['name']: input_['type']})
+
+                    function_prehash = "{0}({1})".format(function_name, ",".join(input_types))
+                    function_signature = get_function_signature(function_prehash)
+
+                    self.__functions[function_signature] = {
+                        "function_name": function_name,
+                        "data": data
+                    }
         return self.__functions
+
+    @functions.setter
+    def functions(self, val):
+        self.__functions = val
     
     @property
     def events(self):
-        self.__events = {}
-        for item in self.abi:
-            if item['type'] == 'event':
-                event_name = item['name']
-                input_types = []
-                topics = OrderedDict()
-                data = OrderedDict()
-                anonymous = item['anonymous']
-                        
-                for input_ in item['inputs']:
-                    input_types.append(input_['type'])
-                                
-                    if input_['indexed']:
-                        topics.update({input_['name']: input_['type']})
+        if self.__events is None:
+            self.__events = {}
+            for item in self.abi:
+                if item['type'] == 'event':
+                    event_name = item['name']
+                    input_types = []
+                    topics = OrderedDict()
+                    data = OrderedDict()
+                    anonymous = item['anonymous']
+
+                    for input_ in item['inputs']:
+                        input_types.append(input_['type'])
+
+                        if input_['indexed']:
+                            topics.update({input_['name']: input_['type']})
+                        else:
+                            data.update({input_['name']: input_['type']})
+
+                    if not anonymous:
+                        event_prehash = "{0}({1})".format(event_name, ",".join(input_types))
+                        event_hash = get_event_hash(event_prehash)
                     else:
-                        data.update({input_['name']: input_['type']})
-                    
-                if not anonymous:
-                    event_prehash = "{0}({1})".format(event_name, ",".join(input_types))
-                    event_hash = get_event_hash(event_prehash)
-                else:
-                    event_hash = "Anonymous"
-                        
-                self.__events[event_hash] = {
-                    "event_name": event_name,
-                    "topics": topics,
-                    "data": data
-                }
+                        event_hash = "Anonymous"
+
+                    self.__events[event_hash] = {
+                        "event_name": event_name,
+                        "topics": topics,
+                        "data": data
+                    }
         return self.__events
+
+    @events.setter
+    def events(self, val):
+        self.__events = val
 
 ###############
 # TOKEN CLASS #
@@ -515,9 +527,9 @@ LIMIT 1""".format(public_dataset['traces'], contract.address)
         
         date_sql = ""
         if 'start' in contract.query_range:
-            date_sql += "AND block_timestamp >= \"{0}\"".format(dt.datetime.strptime(contract.query_range['start'], '%Y-%m-%d'))
+            date_sql += "AND block_timestamp >= \"{0}\"".format(contract.query_range['start'])
         if 'end' in contract.query_range:
-            date_sql += "\nAND block_timestamp < \"{0}\"".format(dt.datetime.strptime(contract.query_range['end'], '%Y-%m-%d') + dt.timedelta(days=1))
+            date_sql += "\nAND block_timestamp < \"{0}\"".format(contract.query_range['end'])
             
         sql = """
 SELECT
@@ -562,9 +574,9 @@ WHERE address = "{1}"
         
         date_sql = ""
         if 'start' in account.query_range:
-            date_sql += "AND block_timestamp >= \"{0}\"\n".format(dt.datetime.strptime(account.query_range['start'], '%Y-%m-%d'))
+            date_sql += "AND block_timestamp >= \"{0}\"\n".format(account.query_range['start'])
         if 'end' in account.query_range:
-            date_sql += "AND block_timestamp < \"{0}\"".format(dt.datetime.strptime(account.query_range['end'], '%Y-%m-%d') + dt.timedelta(days=1))
+            date_sql += "AND block_timestamp < \"{0}\"".format(account.query_range['end'])
             
         sql = """
 SELECT
